@@ -1,0 +1,17 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.fixAll.eslint": true
+  },
+  "tabnine.experimentalAutoImports": true,
+  "rapidapi.terminalLink.enabled": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "java.configuration.runtimes": [],
+  "notebook.find.filters": {
+    "markupSource": true,
+    "markupPreview": true,
+    "codeSource": true,
+    "codeOutput": true
+  }
+}
