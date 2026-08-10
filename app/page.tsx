@@ -1,52 +1,43 @@
 import { createClient } from "@/supabase/server";
 import { cookies } from "next/headers";
-import { z } from "zod";
-import { ChartComp } from "@/components/chartComp";
+import dphPrediction from "@/utils/dphPrediction";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const PersonSchema = z.object({
-  name: z.string().nullable(),
-  birth_date: z.date(),
-  age: z.number(),
-});
-
-type Person = z.infer<typeof PersonSchema>;
-
-const persons: Person[] = [
-  {
-    name: "Petr",
-    age: 20,
-    birth_date: new Date(2025, 12, 5),
-  },
-  {
-    name: "David",
-    age: 13,
-    birth_date: new Date(2024, 13, 8),
-  },
-  {
-    name: "Jan",
-    age: 17,
-    birth_date: new Date(2020, 13, 8),
-  },
-];
-
-//vyresit Eslint
 export default async function Page() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
+  const monthlyDPHPredNumber = dphPrediction("MONTHLY");
+  const quarterlyDPHPredNumber = dphPrediction("QUARTERLY");
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: todos } = await supabase.from("todos").select();
 
   return (
-    <div>
-      {<ChartComp text="ahoj" />}
-      {persons.map(person => (
-        <li key={person.name}>
-          name: {person.name} / age: {person.age} / birth date:
-          {person.birth_date.toISOString()}
-        </li>
-      ))}
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <h1 style={{ textAlign: "center" }}>Monthly</h1>
+        {/* {<ChartComp text="ahoj" />} */}
+        <p style={{ textAlign: "center", fontSize: "30px" }}>
+          {monthlyDPHPredNumber}
+        </p>
+
+        <h1 style={{ textAlign: "center" }}>Quarterly</h1>
+        <p style={{ textAlign: "center", fontSize: "30px" }}>
+          {quarterlyDPHPredNumber}
+        </p>
+      </div>
     </div>
   );
 }
