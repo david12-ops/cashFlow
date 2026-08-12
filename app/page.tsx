@@ -32,11 +32,6 @@ export default async function Page() {
         <p style={{ textAlign: "center", fontSize: "30px" }}>
           {monthlyDPHPredNumber}
         </p>
-
-        {/* <h1 style={{ textAlign: "center" }}>Quarterly</h1>
-        <p style={{ textAlign: "center", fontSize: "30px" }}>
-          {quarterlyDPHPredNumber}
-        </p> */}
       </div>
     </div>
   );
