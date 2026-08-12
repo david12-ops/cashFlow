@@ -5,8 +5,8 @@ import dphPrediction from "@/utils/dphPrediction";
 export default async function Page() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  const monthlyDPHPredNumber = dphPrediction("MONTHLY");
-  const quarterlyDPHPredNumber = dphPrediction("QUARTERLY");
+  const monthlyDPHPredNumber = dphPrediction();
+  // const quarterlyDPHPredNumber = dphPrediction("QUARTERLY");
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: todos } = await supabase.from("todos").select();
@@ -33,10 +33,10 @@ export default async function Page() {
           {monthlyDPHPredNumber}
         </p>
 
-        <h1 style={{ textAlign: "center" }}>Quarterly</h1>
+        {/* <h1 style={{ textAlign: "center" }}>Quarterly</h1>
         <p style={{ textAlign: "center", fontSize: "30px" }}>
           {quarterlyDPHPredNumber}
-        </p>
+        </p> */}
       </div>
     </div>
   );

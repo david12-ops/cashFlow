@@ -1,4 +1,4 @@
-import { AggregatedValues, DphData } from "../zod-schemas/dphData";
+import { DphData } from "../zod-schemas/dphData";
 
 function prepareDPHData(
   days: number,
@@ -197,199 +197,116 @@ function getMonths(
   return undefined;
 }
 
-function normalizeClosedMonthsDPHvaluesbyDay(
+function normalizedInPercent(
+  averageDaysData: {
+    date: Date;
+    dph_kc: number;
+  }[],
+  sumOfAveragedph: number,
+  activeDaysCount: number,
+  activeMonthDaysCount: number
+): {
+  date: Date;
+  dph_kc: number;
+}[] {
+  const dataInPercent = averageDaysData.map(day => {
+    return {
+      ...day,
+      dph_kc: ((day.dph_kc ?? 0) / sumOfAveragedph) * 100,
+    };
+  });
+
+  console.log("pocet dni v mesici " + activeMonthDaysCount);
+  console.log("pocet uplynulych dnu aktivniho mesice " + activeDaysCount);
+
+  const redistributed = redistributeExtraDays(
+    dataInPercent,
+    activeDaysCount,
+    activeMonthDaysCount
+  );
+
+  return redistributed;
+}
+
+function aggregateClosedMonthsDPHvaluesbyDay(
   closedMonths: {
     date: Date;
     dph_kc: number;
-  }[][],
-  activeMonth: { date: Date; dph_kc: number }[],
-  day: number,
-  sumOfDPHbyMonths: number[],
-  sumOfdphInActiveMonth: number
-): {
-  closedMonth: { date: Date | null; dph_kc: number | null }[];
-  pairedWithActive: { date: Date; dph_kc: number }[];
-} {
-  const normalizedData: {
-    closedMonth: { date: Date | null; dph_kc: number | null }[];
-    pairedWithActive: { date: Date; dph_kc: number }[];
-  } = { closedMonth: [], pairedWithActive: [] };
+  }[][]
+): { date: Date; dph_kc: number }[] {
+  const aggregatedData: { date: Date; dph_kc: number }[] = [];
 
-  const normalizedClosedMonths: { date: Date | null; dph_kc: number | null }[] =
-    [];
-  const normalizedActiveMonth: { date: Date; dph_kc: number }[] = [];
+  const maxDays = Math.max(...closedMonths.map(month => month.length));
 
-  const activeDay = activeMonth[day];
+  for (let day = 0; day < maxDays; day++) {
+    const days = closedMonths
+      .map(month => month[day])
+      .filter(value => value?.dph_kc != null && value.date != null);
 
-  closedMonths.forEach((months, index) => {
-    const sum = sumOfDPHbyMonths[index];
+    if (days.length === 0) continue;
 
-    const normalizedAmount =
-      months[day] && sum > 0 ? (months[day].dph_kc / sum) * 100 : null;
+    const sumOfDays = days.reduce((sum, day) => sum + (day.dph_kc ?? 0), 0);
 
-    normalizedClosedMonths.push({
-      date: months[day]?.date ?? null,
-      dph_kc: normalizedAmount,
+    const averageDay = sumOfDays / days.length;
+
+    //?
+    aggregatedData.push({
+      date: new Date(
+        days[days.length - 1].date.getFullYear(),
+        days[days.length - 1].date.getMonth() + 1,
+        days[days.length - 1].date.getDate()
+      ),
+      dph_kc: averageDay,
     });
-  });
-
-  if (activeDay && sumOfdphInActiveMonth > 0) {
-    normalizedActiveMonth.push({
-      date: activeDay.date,
-      dph_kc: (activeDay.dph_kc / sumOfdphInActiveMonth) * 100,
-    });
-  }
-
-  normalizedData.closedMonth = normalizedClosedMonths;
-  normalizedData.pairedWithActive = normalizedActiveMonth;
-
-  return normalizedData;
-}
-
-function aggregateNormalizedInPercent(
-  data: {
-    closedMonth: {
-      date: Date | null;
-      dph_kc: number | null;
-    }[];
-    pairedWithActive: {
-      date: Date;
-      dph_kc: number;
-    }[];
-  },
-  closedMonthsCount: number
-): { date: Date | null; dph_kc: number | null }[] {
-  const aggregatedData: { date: Date | null; dph_kc: number | null }[] = [];
-
-  for (let i = 0; i < data.closedMonth.length; i += closedMonthsCount) {
-    const days = data.closedMonth.slice(i, i + closedMonthsCount);
-
-    // const firstPairedWithActiveDay = data.pairedWithActive[i];
-    // const secondPairedWithActiveDay = data.pairedWithActive[i + 1];
-    // const thirdPairedWithActiveDay = data.pairedWithActive[i + 2];
-
-    // Tohle !!!, prozatim
-    const validDays = days.filter(
-      day => day.dph_kc != null && day.date != null
-    );
-
-    // let sumOfDays = 0;
-
-    const sumOfDays = validDays.reduce(
-      (sum, day) => sum + (day.dph_kc ?? 0),
-      0
-    );
-
-    if (validDays.length > 0) {
-      const lastDay = validDays.at(-1);
-
-      let newDate = null;
-
-      if (lastDay?.date) {
-        newDate = new Date(
-          lastDay.date.getFullYear(),
-          lastDay.date.getMonth() + 1,
-          lastDay.date.getDate()
-        );
-      }
-
-      aggregatedData.push({
-        date: newDate,
-        dph_kc: sumOfDays / validDays.length, // (pairedDaysWithActive ? closedMonthsCount + 1 : closedMonthsCount),
-      });
-    }
-
-    // const pairedDaysWithActive = false;
-
-    // if (firstClosedDayOfMonth != null && firstClosedDayOfMonth.dph_kc != null) {
-    //   if (firstPairedWithActiveDay != null && firstPairedWithActiveDay.dph_kc) {
-    //     sumOfDays +=
-    //       firstClosedDayOfMonth.dph_kc + firstPairedWithActiveDay.dph_kc;
-    //     pairedDaysWithActive = true;
-    //   } else {
-    //     sumOfDays += firstClosedDayOfMonth.dph_kc;
-    //     pairedDaysWithActive = false;
-    //   }
-    // }
-
-    // if (
-    //   secondClosedDayOfMonth != null &&
-    //   secondClosedDayOfMonth.dph_kc != null
-    // ) {
-    //   if (
-    //     secondPairedWithActiveDay != null &&
-    //     secondPairedWithActiveDay.dph_kc
-    //   ) {
-    //     sumOfDays +=
-    //       secondClosedDayOfMonth.dph_kc + secondPairedWithActiveDay.dph_kc;
-    //     pairedDaysWithActive = true;
-    //   } else {
-    //     sumOfDays += secondClosedDayOfMonth.dph_kc;
-    //     pairedDaysWithActive = false;
-    //   }
-    // }
-
-    // if (thirdClosedDayOfMonth != null && thirdClosedDayOfMonth.dph_kc != null) {
-    //   if (thirdPairedWithActiveDay != null && thirdPairedWithActiveDay.dph_kc) {
-    //     sumOfDays +=
-    //       thirdClosedDayOfMonth.dph_kc + thirdPairedWithActiveDay.dph_kc;
-    //     pairedDaysWithActive = true;
-    //   } else {
-    //     sumOfDays += thirdClosedDayOfMonth.dph_kc;
-    //     pairedDaysWithActive = false;
-    //   }
-    // }
-
-    // if (sumOfDays !== 0) {
-    //   let newDate = null;
-
-    //   if (thirdClosedDayOfMonth.date != null)
-    //     newDate = new Date(
-    //       thirdClosedDayOfMonth.date.getFullYear(),
-    //       thirdClosedDayOfMonth.date.getMonth() + 1,
-    //       thirdClosedDayOfMonth.date.getDate()
-    //     );
-
-    //   aggregatedData.push({
-    //     date: newDate,
-    //     dph_kc: sumOfDays / closedMonthsCount, // (pairedDaysWithActive ? closedMonthsCount + 1 : closedMonthsCount),
-    //   });
-    // }
   }
 
   return aggregatedData;
 }
 
-// function redistributeExtraDays(
-//   month: { date: Date; dph_kc: number }[],
-//   targetDays: number
-// ): { date: Date; dph_kc: number }[] {
-//   if (month.length <= targetDays) return month;
+function redistributeExtraDays(
+  month: { date: Date; dph_kc: number }[],
+  activeDaysCount: number,
+  activeMonthDaysCount: number
+): { date: Date; dph_kc: number }[] {
+  // historicke dny, ktere v aktualnim nemaji misto
+  const extraHistoricalDays = month.slice(activeMonthDaysCount);
 
-//   const mainDays = month.slice(0, targetDays);
-//   const extraDays = month.slice(targetDays);
+  // procenta na distribuci
+  const percentageToRedistribute = extraHistoricalDays.reduce(
+    (sum, day) => sum + day.dph_kc,
+    0
+  );
 
-//   const extraAmount = extraDays.reduce((sum, day) => sum + day.dph_kc, 0);
-//   const mainAmount = mainDays.reduce((sum, day) => sum + day.dph_kc, 0);
+  const remainingActiveDays = activeMonthDaysCount - activeDaysCount;
 
-//   if (mainAmount === 0) return mainDays;
+  if (remainingActiveDays <= 0) {
+    return month.slice(0, activeMonthDaysCount);
+  }
 
-//   return mainDays.map(day => {
-//     const ratio = day.dph_kc / mainAmount;
+  const percentagePerRemainingDay =
+    percentageToRedistribute / remainingActiveDays;
 
-//     return {
-//       ...day,
-//       dph_kc: day.dph_kc + extraAmount * ratio,
-//     };
-//   });
-// }
+  // Dny, které uz probehly - nesahat!!
+  const pastDays = month.slice(0, activeDaysCount);
+
+  const futureDays = month
+    .slice(activeDaysCount, activeMonthDaysCount)
+    .map(day => {
+      return {
+        ...day,
+        dph_kc: day.dph_kc + percentagePerRemainingDay,
+      };
+    });
+
+  return [...pastDays, ...futureDays];
+}
 
 function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   aggNumbersInPercent: {
-    date: Date | null;
-    dph_kc: number | null;
+    date: Date;
+    dph_kc: number;
   }[];
-  activeMonthNumbers: { date: Date; dph_kc: number }[];
+  activeMonth: { date: Date; dph_kc: number }[];
   sumOfActiveMonth: number;
 } {
   const closedMoths = getMonths(data, "MONTHLY", "CLOSED") as {
@@ -402,11 +319,6 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
     dph_kc: number;
   }[];
 
-  const normalizedMonths = {
-    closedMonth: [] as { date: Date | null; dph_kc: number | null }[],
-    pairedWithActive: [] as { date: Date; dph_kc: number }[],
-  };
-
   if (
     !closedMoths ||
     closedMoths.length === 0 ||
@@ -415,7 +327,7 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   )
     return {
       aggNumbersInPercent: [],
-      activeMonthNumbers: [],
+      activeMonth: [],
       sumOfActiveMonth: 0,
     };
 
@@ -429,88 +341,26 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   );
 
   console.log("sumOfdphInMonths", sumOfdphInMonths);
-  console.log("sumOfdphInActiveMonth", sumOfdphInActiveMonth);
+  // console.log("sumOfdphInActiveMonth", sumOfdphInActiveMonth);
 
-  for (let i = 0; i < 31; i++) {
-    const normalized = normalizeClosedMonthsDPHvaluesbyDay(
-      closedMoths,
-      activeMonth,
-      i,
-      sumOfdphInMonths,
-      sumOfdphInActiveMonth
-    );
+  const aggregatedClosedMonth =
+    aggregateClosedMonthsDPHvaluesbyDay(closedMoths);
 
-    normalizedMonths.closedMonth.push(...normalized.closedMonth);
-    normalizedMonths.pairedWithActive.push(...normalized.pairedWithActive);
-  }
+  console.log("data", data, "data.length", Object.keys(data).length);
+  console.log("aggregatedMonth", aggregatedClosedMonth);
 
-  // console.log(
-  //   "activeMonth",
-  //   activeMonth,
-  //   "activeMonth.length",
-  //   activeMonth.length
-  // );
-
-  console.log(
-    "normalizedActiveMonth",
-    normalizedMonths.pairedWithActive,
-    "normalizedMonths.pairedWithActive.length",
-    normalizedMonths.pairedWithActive.length
+  const normalizedsInPercent = normalizedInPercent(
+    aggregatedClosedMonth,
+    aggregatedClosedMonth.reduce((sum, day) => sum + (day.dph_kc ?? 0), 0),
+    activeMonth.length,
+    getDaysInMonths(activeMonth[0].date)
   );
 
-  console.log(
-    "normalizedClosedMonths",
-    normalizedMonths.closedMonth,
-    normalizedMonths.closedMonth.length
-  );
-
-  // normalizedClosedMonths.forEach(item => {
-  //   console.log(
-  //     "item",
-  //     "month",
-  //     item.date?.getMonth(),
-  //     "day",
-  //     item.date?.getDate(),
-  //     "value",
-  //     item.dph_kc
-  //   );
-  // });
-
-  // console.log("data", data, "data.length", Object.keys(data).length);
-
-  const aggregatedNormalizedsInPercent = aggregateNormalizedInPercent(
-    normalizedMonths,
-    closedMoths.length
-  );
-
-  console.log(
-    "aggregatedNormalizedsInPercent",
-    aggregatedNormalizedsInPercent,
-    "aggregatedNormalizedsInPercent.length",
-    aggregatedNormalizedsInPercent ? 1 : 0
-  );
-
-  // const aggregatedInPercentActiveMonth = aggregateInPercentActiveMonth(
-  //   aggregatedNormalizedClosedMonthsInPercent.slice(0, activeMonth.length),
-  //   activeMonth,
-  //   activeMonth.reduce((sum, val) => (sum += val.dph_kc), 0)
-  // );
-
-  // console.log(
-  //   "aggregatedInPercentActiveMonth",
-  //   aggregatedInPercentActiveMonth,
-  //   "aggregatedInPercentActiveMonth.length",
-  //   aggregatedInPercentActiveMonth ? 1 : 0
-  // );
-
-  // const totalPercent = [
-  //   ...aggregatedNormalizedClosedMonthsInPercent,
-  //   ...aggregatedInPercentActiveMonth,
-  // ];
+  console.log("normalizedsInPercent", normalizedsInPercent);
 
   return {
-    aggNumbersInPercent: aggregatedNormalizedsInPercent,
-    activeMonthNumbers: normalizedMonths.pairedWithActive,
+    aggNumbersInPercent: normalizedsInPercent,
+    activeMonth: activeMonth,
     sumOfActiveMonth: sumOfdphInActiveMonth,
   };
 }
@@ -520,37 +370,26 @@ function monthlyDPHPrediction(): number {
 
   if (Object.values(data).some(days => days.length === 0)) return 0;
 
-  const { aggNumbersInPercent, activeMonthNumbers, sumOfActiveMonth } =
+  const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
     aggregateMonthlyDPHvaluesbyDay(data) as {
       aggNumbersInPercent: {
-        date: Date | null;
-        dph_kc: number | null;
+        date: Date;
+        dph_kc: number;
       }[];
-      activeMonthNumbers: { date: Date; dph_kc: number }[];
+      activeMonth: { date: Date; dph_kc: number }[];
       sumOfActiveMonth: number;
     };
 
-  // if (inPercant.length === 0 || inAverageValue.length === 0) return 0;
-
-  // const sumAvarageDphInMonth = inAverageValue.reduce(
-  //   (sum, val) => (sum += val.dph_kc),
-  //   0
-  // );
-
-  // const sumPercentInMonth = inPercant.reduce(
-  //   (sum, val) => (sum += val.dph_kc),
-  //   0
-  // );
-
-  // console.log("sumAvarageDphInMonth", sumAvarageDphInMonth);
-  // console.log("sumPercentInMonth", sumPercentInMonth);
-
   const historyPercentage = aggNumbersInPercent
-    .slice(0, activeMonthNumbers.length)
+    .slice(0, activeMonth.length)
     .reduce((sum, val) => (sum += val.dph_kc ?? 0), 0);
 
   const predictedDph = (sumOfActiveMonth / historyPercentage) * 100;
 
+  console.log(
+    "sum of percent",
+    aggNumbersInPercent.reduce((sum, day) => sum + day.dph_kc, 0)
+  );
   console.log("predicted", predictedDph);
 
   if (historyPercentage <= 0 || sumOfActiveMonth <= 0) {
@@ -560,7 +399,7 @@ function monthlyDPHPrediction(): number {
   return predictedDph;
 }
 
-export default function dphPrediction(period: "MONTHLY" | "QUARTERLY"): number {
+export default function dphPrediction(): number {
   // nekdy muze stat davat a nekdy brat ?
   // měsičními je na konzultaci
   // čtvrtletními plátci DPH není, lze použít měsíční predikci (ta není 100%) se sečtením tří měsíců
@@ -580,9 +419,5 @@ export default function dphPrediction(period: "MONTHLY" | "QUARTERLY"): number {
   // Tigger na prepocet nove dodanych v soucasnym i minulym mesici
   // zkontroluj cisla - vypada to dobře
 
-  if (period === "MONTHLY") return monthlyDPHPrediction();
-
-  // if (period === "QUARTERLY") return quarterlyDPHPrediction();
-
-  return 0;
+  return monthlyDPHPrediction();
 }
