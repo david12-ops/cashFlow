@@ -1,12 +1,15 @@
 import { createClient } from "@/supabase/server";
 import { cookies } from "next/headers";
 import dphPrediction from "@/utils/dphPrediction";
+import wageCostsPrediction from "@/utils/wageCostsPrediction";
 
 export default async function Page() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
   const monthlyDPHPredNumber = dphPrediction();
   // const quarterlyDPHPredNumber = dphPrediction("QUARTERLY");
+
+  const wagePrediction = wageCostsPrediction();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: todos } = await supabase.from("todos").select();
@@ -27,10 +30,16 @@ export default async function Page() {
           justifyContent: "space-between",
         }}
       >
-        <h1 style={{ textAlign: "center" }}>Monthly</h1>
+        <h1 style={{ textAlign: "center" }}>Monthly (DPH)</h1>
         {/* {<ChartComp text="ahoj" />} */}
         <p style={{ textAlign: "center", fontSize: "30px" }}>
           {monthlyDPHPredNumber}
+        </p>
+
+        <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
+        {/* {<ChartComp text="ahoj" />} */}
+        <p style={{ textAlign: "center", fontSize: "30px" }}>
+          {wagePrediction}
         </p>
       </div>
     </div>

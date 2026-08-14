@@ -18,8 +18,8 @@ function prepareDPHData(
 
       if (!monthDaysInOneYear[keyDate]) monthDaysInOneYear[keyDate] = [];
 
-      const dph_kc = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
-      monthDaysInOneYear[keyDate].push({ date, dph_kc });
+      const dph_val = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
+      monthDaysInOneYear[keyDate].push({ Date_val: date, Dph_val: dph_val });
     }
 
     return monthDaysInOneYear;
@@ -53,8 +53,11 @@ function prepareDPHData(
           if (!monthDaysAcrossPastYears[keyDate])
             monthDaysAcrossPastYears[keyDate] = [];
 
-          const dph_kc = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
-          monthDaysAcrossPastYears[keyDate].push({ date, dph_kc });
+          const dph_val = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
+          monthDaysAcrossPastYears[keyDate].push({
+            Date_val: date,
+            Dph_val: dph_val,
+          });
         }
       }
     }
@@ -122,9 +125,9 @@ function getLastKey(data: DphData): string | undefined {
 
     if (
       data[monthKey] &&
-      getDaysInMonths(new Date(data[monthKey][0].date)) != 0 &&
+      getDaysInMonths(new Date(data[monthKey][0].Date_val)) != 0 &&
       data[monthKey].length ===
-        getDaysInMonths(new Date(data[monthKey][0].date))
+        getDaysInMonths(new Date(data[monthKey][0].Date_val))
     ) {
       lastClosedMonthKey = monthKey;
       closed = true;
@@ -140,8 +143,8 @@ function getMonths(
   monthlyType?: "CLOSED" | "ACTIVE", // u quarterly vymyslet neco lepšího
   quarterlyType?: "PAST_YEARS" | "CURRENT_YEAR"
 ):
-  | { date: Date; dph_kc: number }[][]
-  | { date: Date; dph_kc: number }[]
+  | { Date_val: Date; Dph_val: number }[][]
+  | { Date_val: Date; Dph_val: number }[]
   | undefined {
   const lastClosedMonthKey = getLastKey(data);
   if (!lastClosedMonthKey) return [];
@@ -176,7 +179,7 @@ function getMonths(
         return (
           monthData.length <
           getDaysInMonths(
-            new Date(monthData[Math.round(monthData.length / 2)].date)
+            new Date(monthData[Math.round(monthData.length / 2)].Date_val)
           )
         );
     })[0];
@@ -186,7 +189,7 @@ function getMonths(
         return (
           monthData.length ===
           getDaysInMonths(
-            new Date(monthData[Math.round(monthData.length / 2)].date)
+            new Date(monthData[Math.round(monthData.length / 2)].Date_val)
           )
         );
     });
@@ -199,25 +202,25 @@ function getMonths(
 
 function normalizedInPercent(
   averageDaysData: {
-    date: Date;
-    dph_kc: number;
+    Date_val: Date;
+    Dph_val: number;
   }[],
   sumOfAveragedph: number,
   activeDaysCount: number,
   activeMonthDaysCount: number
 ): {
-  date: Date;
-  dph_kc: number;
+  Date_val: Date;
+  Dph_val: number;
 }[] {
   const dataInPercent = averageDaysData.map(day => {
     return {
       ...day,
-      dph_kc: ((day.dph_kc ?? 0) / sumOfAveragedph) * 100,
+      Dph_val: ((day.Dph_val ?? 0) / sumOfAveragedph) * 100,
     };
   });
 
-  console.log("pocet dni v mesici " + activeMonthDaysCount);
-  console.log("pocet uplynulych dnu aktivniho mesice " + activeDaysCount);
+  // console.log("pocet dni v mesici " + activeMonthDaysCount);
+  // console.log("pocet uplynulych dnu aktivniho mesice " + activeDaysCount);
 
   const redistributed = redistributeExtraDays(
     dataInPercent,
@@ -230,33 +233,33 @@ function normalizedInPercent(
 
 function aggregateClosedMonthsDPHvaluesbyDay(
   closedMonths: {
-    date: Date;
-    dph_kc: number;
+    Date_val: Date;
+    Dph_val: number;
   }[][]
-): { date: Date; dph_kc: number }[] {
-  const aggregatedData: { date: Date; dph_kc: number }[] = [];
+): { Date_val: Date; Dph_val: number }[] {
+  const aggregatedData: { Date_val: Date; Dph_val: number }[] = [];
 
   const maxDays = Math.max(...closedMonths.map(month => month.length));
 
   for (let day = 0; day < maxDays; day++) {
     const days = closedMonths
       .map(month => month[day])
-      .filter(value => value?.dph_kc != null && value.date != null);
+      .filter(value => value?.Dph_val != null && value.Date_val != null);
 
     if (days.length === 0) continue;
 
-    const sumOfDays = days.reduce((sum, day) => sum + (day.dph_kc ?? 0), 0);
+    const sumOfDays = days.reduce((sum, day) => sum + (day.Dph_val ?? 0), 0);
 
-    const averageDay = sumOfDays / days.length;
+    const averageDphDay = sumOfDays / days.length;
 
-    //?
+    // TODO - tady se mi to zatim nelibi
     aggregatedData.push({
-      date: new Date(
-        days[days.length - 1].date.getFullYear(),
-        days[days.length - 1].date.getMonth() + 1,
-        days[days.length - 1].date.getDate()
+      Date_val: new Date(
+        days[days.length - 1].Date_val.getFullYear(),
+        days[days.length - 1].Date_val.getMonth() + 1,
+        days[days.length - 1].Date_val.getDate()
       ),
-      dph_kc: averageDay,
+      Dph_val: averageDphDay,
     });
   }
 
@@ -264,16 +267,16 @@ function aggregateClosedMonthsDPHvaluesbyDay(
 }
 
 function redistributeExtraDays(
-  month: { date: Date; dph_kc: number }[],
+  month: { Date_val: Date; Dph_val: number }[],
   activeDaysCount: number,
   activeMonthDaysCount: number
-): { date: Date; dph_kc: number }[] {
+): { Date_val: Date; Dph_val: number }[] {
   // historicke dny, ktere v aktualnim nemaji misto
   const extraHistoricalDays = month.slice(activeMonthDaysCount);
 
   // procenta na distribuci
   const percentageToRedistribute = extraHistoricalDays.reduce(
-    (sum, day) => sum + day.dph_kc,
+    (sum, day) => sum + day.Dph_val,
     0
   );
 
@@ -294,7 +297,7 @@ function redistributeExtraDays(
     .map(day => {
       return {
         ...day,
-        dph_kc: day.dph_kc + percentagePerRemainingDay,
+        Dph_val: day.Dph_val + percentagePerRemainingDay,
       };
     });
 
@@ -303,20 +306,20 @@ function redistributeExtraDays(
 
 function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   aggNumbersInPercent: {
-    date: Date;
-    dph_kc: number;
+    Date_val: Date;
+    Dph_val: number;
   }[];
-  activeMonth: { date: Date; dph_kc: number }[];
+  activeMonth: { Date_val: Date; Dph_val: number }[];
   sumOfActiveMonth: number;
 } {
   const closedMoths = getMonths(data, "MONTHLY", "CLOSED") as {
-    date: Date;
-    dph_kc: number;
+    Date_val: Date;
+    Dph_val: number;
   }[][];
 
   const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as {
-    date: Date;
-    dph_kc: number;
+    Date_val: Date;
+    Dph_val: number;
   }[];
 
   if (
@@ -331,16 +334,16 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
       sumOfActiveMonth: 0,
     };
 
-  const sumOfdphInMonths = closedMoths.map(monthData => {
-    return monthData.reduce((sum, val) => (sum += val.dph_kc), 0);
-  });
+  // const sumOfdphInMonths = closedMoths.map(monthData => {
+  //   return monthData.reduce((sum, val) => (sum += val.Dph_val), 0);
+  // });
 
   const sumOfdphInActiveMonth = activeMonth.reduce(
-    (sum, val) => (sum += val.dph_kc),
+    (sum, val) => (sum += val.Dph_val),
     0
   );
 
-  console.log("sumOfdphInMonths", sumOfdphInMonths);
+  // console.log("sumOfdphInMonths", sumOfdphInMonths);
   // console.log("sumOfdphInActiveMonth", sumOfdphInActiveMonth);
 
   const aggregatedClosedMonth =
@@ -351,9 +354,9 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
 
   const normalizedsInPercent = normalizedInPercent(
     aggregatedClosedMonth,
-    aggregatedClosedMonth.reduce((sum, day) => sum + (day.dph_kc ?? 0), 0),
+    aggregatedClosedMonth.reduce((sum, day) => sum + (day.Dph_val ?? 0), 0),
     activeMonth.length,
-    getDaysInMonths(activeMonth[0].date)
+    getDaysInMonths(activeMonth[0].Date_val)
   );
 
   console.log("normalizedsInPercent", normalizedsInPercent);
@@ -373,22 +376,22 @@ function monthlyDPHPrediction(): number {
   const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
     aggregateMonthlyDPHvaluesbyDay(data) as {
       aggNumbersInPercent: {
-        date: Date;
-        dph_kc: number;
+        Date_val: Date;
+        Dph_val: number;
       }[];
-      activeMonth: { date: Date; dph_kc: number }[];
+      activeMonth: { Date_val: Date; Dph_val: number }[];
       sumOfActiveMonth: number;
     };
 
   const historyPercentage = aggNumbersInPercent
     .slice(0, activeMonth.length)
-    .reduce((sum, val) => (sum += val.dph_kc ?? 0), 0);
+    .reduce((sum, val) => (sum += val.Dph_val ?? 0), 0);
 
   const predictedDph = (sumOfActiveMonth / historyPercentage) * 100;
 
   console.log(
     "sum of percent",
-    aggNumbersInPercent.reduce((sum, day) => sum + day.dph_kc, 0)
+    aggNumbersInPercent.reduce((sum, day) => sum + day.Dph_val, 0)
   );
   console.log("predicted", predictedDph);
 
