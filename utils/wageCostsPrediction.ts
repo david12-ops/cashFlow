@@ -252,10 +252,16 @@ function aggregateClusteredDataToNewCentroids(
 }
 
 function continueKmeans(
-  oldCentroids: WageData,
+  oldCentroids: number[],
   newCentroids: number[]
 ): boolean {
-  return true;
+  const tolerance = 0.1;
+
+  for (let i = 0; i < newCentroids.length; i++) {
+    if (Math.abs(newCentroids[i] - oldCentroids[i]) > tolerance) return true;
+  }
+
+  return false;
 }
 
 function findElbow(data: number[]): number {
@@ -281,15 +287,15 @@ function findElbow(data: number[]): number {
 }
 
 function findNearestCentrioid(
-  centroids: WageData,
+  centroids: number[],
   baseAmount: number
 ): { centroidIndex: number; distance: number } {
   let distance = Infinity;
   let centroidIndex = 0;
 
   for (let i = 0; i < centroids.length; i++) {
-    if (Math.abs(centroids[i].BaseAmount - baseAmount) < distance) {
-      distance = Math.abs(centroids[i].BaseAmount - baseAmount);
+    if (Math.abs(centroids[i] - baseAmount) < distance) {
+      distance = Math.abs(centroids[i] - baseAmount);
       centroidIndex = i;
     }
   }
@@ -302,26 +308,47 @@ function findOptimalK(data: WageData): number {
 
   const maxK = 10;
 
+  //for While
+  let oldCentroids: number[] = [];
+  let newCentroids: number[] = [];
+
   for (let k = 2; k < maxK; k++) {
-    let wcss = 0;
-    const selectedCentroids = selectCentroids(k, data);
+    let continueAlg = true;
 
-    for (let i = 0; i < data.length; i++) {
-      const baseAmount = data[i].BaseAmount;
+    let selectedCentroids = selectCentroids(k, data);
 
-      const { distance } = findNearestCentrioid(selectedCentroids, baseAmount);
+    oldCentroids = selectedCentroids;
 
-      wcss += distance ** 2;
+    while (continueAlg) {
+      let wcss = 0;
+
+      for (let i = 0; i < data.length; i++) {
+        const baseAmount = data[i].BaseAmount;
+
+        const { distance } = findNearestCentrioid(
+          selectedCentroids,
+          baseAmount
+        );
+
+        wcss += distance ** 2;
+      }
+
+      wcssValues.push(wcss);
+
+      newCentroids = newCentroidsAvgAmount;
+      selectedCentroids = newCentroidsAvgAmount;
+
+      continueAlg = continueKmeans(oldCentroids, newCentroids);
+
+      oldCentroids = newCentroids;
     }
-
-    wcssValues.push(wcss);
   }
 
   return findElbow(wcssValues);
 }
 
-function selectCentroids(k: number, data: WageData): WageData {
-  const centroids: WageData = [];
+function selectCentroids(k: number, data: WageData): number[] {
+  const centroids: number[] = [];
   const selectedIndexes: number[] = [];
 
   if (k > data.length) {
@@ -339,27 +366,31 @@ function selectCentroids(k: number, data: WageData): WageData {
     // 3. přidání indexu
     selectedIndexes.push(randomIndex);
     // 4. přidání data[index] do centroids
-    centroids.push(data[randomIndex]);
+    centroids.push(data[randomIndex].BaseAmount);
   }
 
   return centroids;
 }
 
 export default function wageCostsPrediction(): number {
-  const values: AmountsPairedToCentroid = [];
   const data: WageData = prepareWageCostData();
+
+  // centroidy maji jen baseAmount
 
   //for While
   let oldCentroids: number[] = [];
   let newCentroids: number[] = [];
+  let continueAlg = true;
 
   const optimalK = findOptimalK(data);
 
   let selectedCentroids = selectCentroids(optimalK, data);
 
-  oldCentroids = selectedCentroids.map(item => item.BaseAmount);
+  oldCentroids = selectedCentroids;
 
-  do {
+  while (continueAlg) {
+    const values: AmountsPairedToCentroid = [];
+
     data.forEach(itm => {
       const { centroidIndex, distance } = findNearestCentrioid(
         selectedCentroids,
@@ -382,7 +413,11 @@ export default function wageCostsPrediction(): number {
 
     newCentroids = newCentroidsAvgAmount;
     selectedCentroids = newCentroidsAvgAmount;
-  } while (continueKmeans(oldCentroids, newCentroids));
+
+    continueAlg = continueKmeans(oldCentroids, newCentroids);
+
+    oldCentroids = newCentroids;
+  }
 
   console.log("wageData ", data.slice(0, 10));
   return 0;
