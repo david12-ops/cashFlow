@@ -18,11 +18,15 @@ export type WageData = z.infer<typeof WageDataSchema>;
 export const AmountsPairedToCentroidSchema = z.array(
   z.object({
     wageItem: WageItemSchema,
-    centroid: WageItemSchema,
+    centroidIndex: z.number(),
     distance: z.number(),
   })
 );
 
+export const ClusterSchema = z.record(z.number(), z.array(WageItemSchema));
+
 export type AmountsPairedToCentroid = z.infer<
   typeof AmountsPairedToCentroidSchema
 >;
+
+export type Cluster = z.infer<typeof ClusterSchema>;
