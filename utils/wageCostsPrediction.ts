@@ -1,8 +1,8 @@
 import {
   AmountsPairedToCentroid,
   Cluster,
+  PredictionWageResult,
   WageData,
-  WageDataItem,
 } from "@/zod-schemas/wageData";
 
 function prepareWageCostData(): WageData {
@@ -320,20 +320,27 @@ function findOptimalK(data: WageData): number {
     oldCentroids = selectedCentroids;
 
     while (continueAlg) {
-      let wcss = 0;
+      const values: AmountsPairedToCentroid = [];
 
-      for (let i = 0; i < data.length; i++) {
-        const baseAmount = data[i].BaseAmount;
-
-        const { distance } = findNearestCentrioid(
+      data.forEach(itm => {
+        const { centroidIndex, distance } = findNearestCentrioid(
           selectedCentroids,
-          baseAmount
+          itm.BaseAmount
         );
 
-        wcss += distance ** 2;
-      }
+        values.push({
+          wageItem: itm,
+          centroidIndex,
+          distance,
+        });
+      });
 
-      wcssValues.push(wcss);
+      const clusteredData = clusterData(values, k);
+
+      const newCentroidsAvgAmount = aggregateClusteredDataToNewCentroids(
+        clusteredData,
+        values
+      );
 
       newCentroids = newCentroidsAvgAmount;
       selectedCentroids = newCentroidsAvgAmount;
@@ -342,6 +349,17 @@ function findOptimalK(data: WageData): number {
 
       oldCentroids = newCentroids;
     }
+
+    let wcss = 0;
+    data.forEach(itm => {
+      const { distance } = findNearestCentrioid(
+        selectedCentroids,
+        itm.BaseAmount
+      );
+
+      wcss += distance ** 2;
+    });
+    wcssValues.push(wcss);
   }
 
   return findElbow(wcssValues);
@@ -372,7 +390,7 @@ function selectCentroids(k: number, data: WageData): number[] {
   return centroids;
 }
 
-export default function wageCostsPrediction(): number {
+export default function wageCostsPrediction(): PredictionWageResult {
   const data: WageData = prepareWageCostData();
 
   // centroidy maji jen baseAmount
@@ -380,6 +398,7 @@ export default function wageCostsPrediction(): number {
   //for While
   let oldCentroids: number[] = [];
   let newCentroids: number[] = [];
+  let clusteredData: Cluster = [];
   let continueAlg = true;
 
   const optimalK = findOptimalK(data);
@@ -404,7 +423,7 @@ export default function wageCostsPrediction(): number {
       });
     });
 
-    const clusteredData = clusterData(values, optimalK);
+    clusteredData = clusterData(values, optimalK);
 
     const newCentroidsAvgAmount = aggregateClusteredDataToNewCentroids(
       clusteredData,
@@ -419,8 +438,7 @@ export default function wageCostsPrediction(): number {
     oldCentroids = newCentroids;
   }
 
-  console.log("wageData ", data.slice(0, 10));
-  return 0;
+  return { centroids: newCentroids, cluster: clusteredData };
 }
 
 /*

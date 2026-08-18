@@ -25,8 +25,15 @@ export const AmountsPairedToCentroidSchema = z.array(
 
 export const ClusterSchema = z.record(z.number(), z.array(WageItemSchema));
 
+export const PredictionWageResultSchema = z.object({
+  centroids: z.array(z.number()),
+  cluster: ClusterSchema,
+});
+
 export type AmountsPairedToCentroid = z.infer<
   typeof AmountsPairedToCentroidSchema
 >;
 
 export type Cluster = z.infer<typeof ClusterSchema>;
+
+export type PredictionWageResult = z.infer<typeof PredictionWageResultSchema>;
