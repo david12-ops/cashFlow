@@ -1,4 +1,4 @@
-import { DphData } from "../zod-schemas/dphData";
+import { DphData, MonthData, MonthsData } from "../zod-schemas/dphData";
 
 function prepareDPHData(
   days: number,
@@ -142,10 +142,7 @@ function getMonths(
   period: "MONTHLY" | "QUARTERLY",
   monthlyType?: "CLOSED" | "ACTIVE", // u quarterly vymyslet neco lepšího
   quarterlyType?: "PAST_YEARS" | "CURRENT_YEAR"
-):
-  | { Date_val: Date; Dph_val: number }[][]
-  | { Date_val: Date; Dph_val: number }[]
-  | undefined {
+): MonthsData | MonthData | undefined {
   const lastClosedMonthKey = getLastKey(data);
   if (!lastClosedMonthKey) return [];
 
@@ -201,17 +198,11 @@ function getMonths(
 }
 
 function normalizedInPercent(
-  averageDaysData: {
-    Date_val: Date;
-    Dph_val: number;
-  }[],
+  averageDaysData: MonthData,
   sumOfAveragedph: number,
   activeDaysCount: number,
   activeMonthDaysCount: number
-): {
-  Date_val: Date;
-  Dph_val: number;
-}[] {
+): MonthData {
   const dataInPercent = averageDaysData.map(day => {
     return {
       ...day,
@@ -232,12 +223,9 @@ function normalizedInPercent(
 }
 
 function aggregateClosedMonthsDPHvaluesbyDay(
-  closedMonths: {
-    Date_val: Date;
-    Dph_val: number;
-  }[][]
-): { Date_val: Date; Dph_val: number }[] {
-  const aggregatedData: { Date_val: Date; Dph_val: number }[] = [];
+  closedMonths: MonthsData
+): MonthData {
+  const aggregatedData: MonthData = [];
 
   const maxDays = Math.max(...closedMonths.map(month => month.length));
 
@@ -267,10 +255,10 @@ function aggregateClosedMonthsDPHvaluesbyDay(
 }
 
 function redistributeExtraDays(
-  month: { Date_val: Date; Dph_val: number }[],
+  month: MonthData,
   activeDaysCount: number,
   activeMonthDaysCount: number
-): { Date_val: Date; Dph_val: number }[] {
+): MonthData {
   // historicke dny, ktere v aktualnim nemaji misto
   const extraHistoricalDays = month.slice(activeMonthDaysCount);
 
@@ -305,11 +293,8 @@ function redistributeExtraDays(
 }
 
 function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
-  aggNumbersInPercent: {
-    Date_val: Date;
-    Dph_val: number;
-  }[];
-  activeMonth: { Date_val: Date; Dph_val: number }[];
+  aggNumbersInPercent: MonthData;
+  activeMonth: MonthData;
   sumOfActiveMonth: number;
 } {
   const closedMoths = getMonths(data, "MONTHLY", "CLOSED") as {

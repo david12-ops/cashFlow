@@ -7,4 +7,17 @@ export const DphItemSchema = z.object({
 
 export const DphDataSchema = z.record(z.string(), z.array(DphItemSchema));
 
+export const MonthDataSchema = z.array(
+  z.object({
+    Date_val: z.date(),
+    Dph_val: z.number(),
+  })
+);
+
+export const MonthsData = z.array(MonthDataSchema);
+
+export type MonthsData = z.infer<typeof MonthsData>;
+
+export type MonthData = z.infer<typeof MonthDataSchema>;
+
 export type DphData = z.infer<typeof DphDataSchema>;
