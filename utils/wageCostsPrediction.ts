@@ -2,11 +2,11 @@ import {
   AmountsPairedToCentroid,
   Cluster,
   PredictionWageResult,
-  WageData,
-} from "@/zod-schemas/wageData";
+  WagesData,
+} from "@/zod-schemas/wageDataTypes";
 
-function prepareWageCostData(): WageData {
-  const wageData: WageData = [];
+function prepareWageCostData(): WagesData {
+  const wageData: WagesData = [];
 
   const startYear = 2021;
   const endYear = 2025;
@@ -210,9 +210,9 @@ function clusterData(data: AmountsPairedToCentroid, k: number): Cluster {
     cluster[i] = [];
 
     const item = data
-      .filter(itm => itm.centroidIndex === i)
+      .filter(itm => itm.CentroidIndex === i)
       .map(itm => {
-        return itm.wageItem;
+        return itm.WageItem;
       });
 
     cluster[i].push(...item);
@@ -240,7 +240,7 @@ function aggregateClusteredDataToNewCentroids(
     let averageAmount = 0;
 
     if (data.length === 0) {
-      averageAmount = oldCentroids[i].wageItem.BaseAmount;
+      averageAmount = oldCentroids[i].WageItem.BaseAmount;
     } else {
       averageAmount = sumOfBaseAmount / data.length;
     }
@@ -303,7 +303,7 @@ function findNearestCentrioid(
   return { centroidIndex, distance };
 }
 
-function findOptimalK(data: WageData): number {
+function findOptimalK(data: WagesData): number {
   const wcssValues: number[] = [];
 
   const maxK = 10;
@@ -329,9 +329,9 @@ function findOptimalK(data: WageData): number {
         );
 
         values.push({
-          wageItem: itm,
-          centroidIndex,
-          distance,
+          WageItem: itm,
+          CentroidIndex: centroidIndex,
+          Distance: distance,
         });
       });
 
@@ -365,7 +365,7 @@ function findOptimalK(data: WageData): number {
   return findElbow(wcssValues);
 }
 
-function selectCentroids(k: number, data: WageData): number[] {
+function selectCentroids(k: number, data: WagesData): number[] {
   const centroids: number[] = [];
   const selectedIndexes: number[] = [];
 
@@ -391,7 +391,7 @@ function selectCentroids(k: number, data: WageData): number[] {
 }
 
 export default function wageCostsPrediction(): PredictionWageResult {
-  const data: WageData = prepareWageCostData();
+  const data: WagesData = prepareWageCostData();
 
   // centroidy maji jen baseAmount
 
@@ -417,9 +417,9 @@ export default function wageCostsPrediction(): PredictionWageResult {
       );
 
       values.push({
-        wageItem: itm,
-        centroidIndex,
-        distance,
+        WageItem: itm,
+        CentroidIndex: centroidIndex,
+        Distance: distance,
       });
     });
 
@@ -438,7 +438,7 @@ export default function wageCostsPrediction(): PredictionWageResult {
     oldCentroids = newCentroids;
   }
 
-  return { centroids: newCentroids, cluster: clusteredData };
+  return { Centroids: newCentroids, Cluster: clusteredData };
 }
 
 /*

@@ -1,4 +1,4 @@
-import { DphData, MonthData, MonthsData } from "../zod-schemas/dphData";
+import { DphData, MonthData, MonthsData } from "../zod-schemas/dphDataTypes";
 
 function prepareDPHData(
   days: number,

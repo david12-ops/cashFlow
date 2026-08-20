@@ -15,9 +15,6 @@ export const MonthDataSchema = z.array(
 );
 
 export const MonthsData = z.array(MonthDataSchema);
-
 export type MonthsData = z.infer<typeof MonthsData>;
-
 export type MonthData = z.infer<typeof MonthDataSchema>;
-
 export type DphData = z.infer<typeof DphDataSchema>;
