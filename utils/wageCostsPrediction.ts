@@ -1,18 +1,272 @@
 import {
   AmountsPairedToCentroid,
   Cluster,
+  Currency,
+  CurrencyConvertMap,
   PredictionWageResult,
   WagesData,
+  EchangeRates,
 } from "@/zod-schemas/wageDataTypes";
 
+function createCurrencyRatesMap(year: number): CurrencyConvertMap {
+  const exchangeRates: EchangeRates = {
+    2021: {
+      CZK: [
+        { Currency: "CZK", Value: 1 },
+        { Currency: "EUR", Value: 0.03899 },
+        { Currency: "USD", Value: 0.04613 },
+        { Currency: "GBP", Value: 0.03352 },
+        { Currency: "PLN", Value: 0.1778 },
+      ],
+      EUR: [
+        { Currency: "CZK", Value: 25.65 },
+        { Currency: "EUR", Value: 1 },
+        { Currency: "USD", Value: 1.183 },
+        { Currency: "GBP", Value: 0.86 },
+        { Currency: "PLN", Value: 4.56 },
+      ],
+      USD: [
+        { Currency: "CZK", Value: 21.68 },
+        { Currency: "EUR", Value: 0.845 },
+        { Currency: "USD", Value: 1 },
+        { Currency: "GBP", Value: 0.727 },
+        { Currency: "PLN", Value: 3.93 },
+      ],
+      GBP: [
+        { Currency: "CZK", Value: 29.83 },
+        { Currency: "EUR", Value: 1.163 },
+        { Currency: "USD", Value: 1.376 },
+        { Currency: "GBP", Value: 1 },
+        { Currency: "PLN", Value: 5.32 },
+      ],
+      PLN: [
+        { Currency: "CZK", Value: 5.625 },
+        { Currency: "EUR", Value: 0.219 },
+        { Currency: "USD", Value: 0.254 },
+        { Currency: "GBP", Value: 0.188 },
+        { Currency: "PLN", Value: 1 },
+      ],
+    },
+
+    2022: {
+      CZK: [
+        { Currency: "CZK", Value: 1 },
+        { Currency: "EUR", Value: 0.04072 },
+        { Currency: "USD", Value: 0.04281 },
+        { Currency: "GBP", Value: 0.03502 },
+        { Currency: "PLN", Value: 0.1827 },
+      ],
+      EUR: [
+        { Currency: "CZK", Value: 24.56 },
+        { Currency: "EUR", Value: 1 },
+        { Currency: "USD", Value: 1.051 },
+        { Currency: "GBP", Value: 0.86 },
+        { Currency: "PLN", Value: 4.49 },
+      ],
+      USD: [
+        { Currency: "CZK", Value: 23.36 },
+        { Currency: "EUR", Value: 0.951 },
+        { Currency: "USD", Value: 1 },
+        { Currency: "GBP", Value: 0.818 },
+        { Currency: "PLN", Value: 4.27 },
+      ],
+      GBP: [
+        { Currency: "CZK", Value: 28.56 },
+        { Currency: "EUR", Value: 1.163 },
+        { Currency: "USD", Value: 1.223 },
+        { Currency: "GBP", Value: 1 },
+        { Currency: "PLN", Value: 5.18 },
+      ],
+      PLN: [
+        { Currency: "CZK", Value: 5.474 },
+        { Currency: "EUR", Value: 0.223 },
+        { Currency: "USD", Value: 0.234 },
+        { Currency: "GBP", Value: 0.193 },
+        { Currency: "PLN", Value: 1 },
+      ],
+    },
+
+    2023: {
+      CZK: [
+        { Currency: "CZK", Value: 1 },
+        { Currency: "EUR", Value: 0.04166 },
+        { Currency: "USD", Value: 0.04505 },
+        { Currency: "GBP", Value: 0.03592 },
+        { Currency: "PLN", Value: 0.1864 },
+      ],
+      EUR: [
+        { Currency: "CZK", Value: 24.0 },
+        { Currency: "EUR", Value: 1 },
+        { Currency: "USD", Value: 1.081 },
+        { Currency: "GBP", Value: 0.862 },
+        { Currency: "PLN", Value: 4.47 },
+      ],
+      USD: [
+        { Currency: "CZK", Value: 22.2 },
+        { Currency: "EUR", Value: 0.925 },
+        { Currency: "USD", Value: 1 },
+        { Currency: "GBP", Value: 0.798 },
+        { Currency: "PLN", Value: 4.13 },
+      ],
+      GBP: [
+        { Currency: "CZK", Value: 27.84 },
+        { Currency: "EUR", Value: 1.16 },
+        { Currency: "USD", Value: 1.253 },
+        { Currency: "GBP", Value: 1 },
+        { Currency: "PLN", Value: 5.16 },
+      ],
+      PLN: [
+        { Currency: "CZK", Value: 5.365 },
+        { Currency: "EUR", Value: 0.224 },
+        { Currency: "USD", Value: 0.242 },
+        { Currency: "GBP", Value: 0.194 },
+        { Currency: "PLN", Value: 1 },
+      ],
+    },
+
+    2024: {
+      CZK: [
+        { Currency: "CZK", Value: 1 },
+        { Currency: "EUR", Value: 0.03981 },
+        { Currency: "USD", Value: 0.04307 },
+        { Currency: "GBP", Value: 0.03388 },
+        { Currency: "PLN", Value: 0.1715 },
+      ],
+      EUR: [
+        { Currency: "CZK", Value: 25.12 },
+        { Currency: "EUR", Value: 1 },
+        { Currency: "USD", Value: 1.082 },
+        { Currency: "GBP", Value: 0.851 },
+        { Currency: "PLN", Value: 4.31 },
+      ],
+      USD: [
+        { Currency: "CZK", Value: 23.22 },
+        { Currency: "EUR", Value: 0.924 },
+        { Currency: "USD", Value: 1 },
+        { Currency: "GBP", Value: 0.786 },
+        { Currency: "PLN", Value: 3.98 },
+      ],
+      GBP: [
+        { Currency: "CZK", Value: 29.52 },
+        { Currency: "EUR", Value: 1.175 },
+        { Currency: "USD", Value: 1.272 },
+        { Currency: "GBP", Value: 1 },
+        { Currency: "PLN", Value: 5.03 },
+      ],
+      PLN: [
+        { Currency: "CZK", Value: 5.831 },
+        { Currency: "EUR", Value: 0.232 },
+        { Currency: "USD", Value: 0.251 },
+        { Currency: "GBP", Value: 0.199 },
+        { Currency: "PLN", Value: 1 },
+      ],
+    },
+
+    2025: {
+      CZK: [
+        { Currency: "CZK", Value: 1 },
+        { Currency: "EUR", Value: 0.0405 },
+        { Currency: "USD", Value: 0.04194 },
+        { Currency: "GBP", Value: 0.035 },
+        { Currency: "PLN", Value: 0.1733 },
+      ],
+      EUR: [
+        { Currency: "CZK", Value: 24.69 },
+        { Currency: "EUR", Value: 1 },
+        { Currency: "USD", Value: 1.035 },
+        { Currency: "GBP", Value: 0.864 },
+        { Currency: "PLN", Value: 4.28 },
+      ],
+      USD: [
+        { Currency: "CZK", Value: 23.84 },
+        { Currency: "EUR", Value: 0.966 },
+        { Currency: "USD", Value: 1 },
+        { Currency: "GBP", Value: 0.832 },
+        { Currency: "PLN", Value: 4.11 },
+      ],
+      GBP: [
+        { Currency: "CZK", Value: 28.57 },
+        { Currency: "EUR", Value: 1.157 },
+        { Currency: "USD", Value: 1.202 },
+        { Currency: "GBP", Value: 1 },
+        { Currency: "PLN", Value: 4.95 },
+      ],
+      PLN: [
+        { Currency: "CZK", Value: 5.77 },
+        { Currency: "EUR", Value: 0.234 },
+        { Currency: "USD", Value: 0.243 },
+        { Currency: "GBP", Value: 0.202 },
+        { Currency: "PLN", Value: 1 },
+      ],
+    },
+  };
+
+  switch (year) {
+    case 2021:
+      return exchangeRates[2021];
+    case 2022:
+      return exchangeRates[2022];
+    case 2023:
+      return exchangeRates[2023];
+    case 2024:
+      return exchangeRates[2024];
+    case 2025:
+      return exchangeRates[2025];
+    default:
+      throw Error("Data with this " + `${year}` + "does not exist");
+  }
+}
+
+function convertValueByCurrency(
+  fromCurrency: Currency,
+  toCurrency: Currency,
+  value: number,
+  ratesMap: CurrencyConvertMap
+): number {
+  const exchangeItem = ratesMap[fromCurrency].find(
+    cur => cur.Currency === toCurrency
+  );
+
+  if (exchangeItem) {
+    return value * exchangeItem.Value;
+  } else
+    throw new Error(
+      `Exchange rate from ${fromCurrency} to ${toCurrency} not found.`
+    );
+}
+
+function convertBaseAmountToOneCurrency(
+  data: WagesData,
+  currency: Currency
+): WagesData {
+  return data.map(item => {
+    const ratesMap: CurrencyConvertMap = createCurrencyRatesMap(
+      item.TransactionDate.getFullYear()
+    );
+
+    return {
+      ...item,
+      BaseAmount: convertValueByCurrency(
+        item.Currency,
+        currency,
+        item.BaseAmount,
+        ratesMap
+      ),
+      Currency: currency,
+    };
+  });
+}
+
 function prepareWageCostData(): WagesData {
+  // zatim normalizuj do czk, ale data klidne generuj v ostatních měnach
+  // pomoci convertBaseAmountToOneCurrency lze delat predikce v urcite měně nehledě na to, že v datech je vice různých měn
   const wageData: WagesData = [];
 
   const startYear = 2021;
   const endYear = 2025;
 
   const divisions = [1, 2, 3, 4];
-  const currencies = ["CZK"];
+  const currencies: Currency[] = ["CZK", "EUR", "USD", "GBP", "PLN"];
 
   const random = (min: number, max: number) => {
     return Math.random() * (max - min) + min;
@@ -41,6 +295,8 @@ function prepareWageCostData(): WagesData {
   };
 
   for (let year = startYear; year <= endYear; year++) {
+    const ratesMap = createCurrencyRatesMap(year);
+
     for (let month = 0; month < 12; month++) {
       /*
        * Mírný růst mezd v čase.
@@ -52,6 +308,7 @@ function prepareWageCostData(): WagesData {
        */
       const yearIndex = year - startYear;
       const salaryGrowth = Math.pow(1.05, yearIndex);
+      const pickedCurrencyIndex = Math.floor(Math.random() * currencies.length);
 
       /*
        * 15. den → mzdy
@@ -83,13 +340,26 @@ function prepareWageCostData(): WagesData {
            */
           const variation = random(0.9, 1.1);
 
-          let salary = baseSalary * variation * salaryGrowth;
+          let salary =
+            convertValueByCurrency(
+              "CZK",
+              currencies[pickedCurrencyIndex],
+              baseSalary,
+              ratesMap
+            ) *
+            variation *
+            salaryGrowth;
 
           /*
            * V prosinci a červnu občas přidáme bonus.
            */
           if ((month === 5 || month === 11) && Math.random() < 0.35)
-            salary += random(5_000, 30_000);
+            salary += convertValueByCurrency(
+              "CZK",
+              currencies[pickedCurrencyIndex],
+              random(5_000, 30_000),
+              ratesMap
+            );
 
           salary = round(salary);
 
@@ -106,7 +376,7 @@ function prepareWageCostData(): WagesData {
             BaseAmount: salary,
             Account: account,
             Division: division,
-            Currency: currencies[0],
+            Currency: currencies[pickedCurrencyIndex],
           });
         }
 
@@ -133,7 +403,7 @@ function prepareWageCostData(): WagesData {
           BaseAmount: social,
           Account: `336${String(division).padStart(3, "0")}`,
           Division: division,
-          Currency: currencies[0],
+          Currency: currencies[pickedCurrencyIndex],
         });
 
         /*
@@ -149,7 +419,7 @@ function prepareWageCostData(): WagesData {
           BaseAmount: health,
           Account: `336${String(division + 100).padStart(3, "0")}`,
           Division: division,
-          Currency: currencies[0],
+          Currency: currencies[pickedCurrencyIndex],
         });
 
         /*
@@ -165,7 +435,7 @@ function prepareWageCostData(): WagesData {
           BaseAmount: tax,
           Account: `342${String(division).padStart(3, "0")}`,
           Division: division,
-          Currency: currencies[0],
+          Currency: currencies[pickedCurrencyIndex],
         });
       }
 
@@ -190,17 +460,22 @@ function prepareWageCostData(): WagesData {
           wageData.push({
             DimDateId: createDimDateId(bonusDay),
             TransactionDate: bonusDay,
-            BaseAmount: round(random(5_000, 25_000)),
+            BaseAmount: convertValueByCurrency(
+              "CZK",
+              currencies[pickedCurrencyIndex],
+              round(random(5_000, 25_000)),
+              ratesMap
+            ),
             Account: `331${String(division).padStart(3, "0")}`,
             Division: division,
-            Currency: currencies[0],
+            Currency: currencies[pickedCurrencyIndex],
           });
         }
       }
     }
   }
 
-  return wageData;
+  return convertBaseAmountToOneCurrency(wageData, "CZK");
 }
 
 function clusterData(data: AmountsPairedToCentroid, k: number): Cluster {
@@ -390,6 +665,54 @@ function selectCentroids(k: number, data: WagesData): number[] {
   return centroids;
 }
 
+function aggregateClusterByMonth(cluster: WagesData): number[] {
+  const monthlyValues = new Map<string, number[]>();
+
+  cluster.forEach(item => {
+    const key = `${item.TransactionDate.getFullYear()} - ${item.TransactionDate.getMonth()}`;
+
+    if (!monthlyValues.has(key)) {
+      monthlyValues.set(key, []);
+    }
+
+    monthlyValues.get(key)!.push(item.BaseAmount);
+  });
+
+  return Array.from(monthlyValues.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, values]) => {
+      const sum = values.reduce((acc, val) => acc + val, 0);
+
+      return sum / values.length;
+    });
+}
+
+function randomWalkWithDrift(monthlyValues: number[]): number {
+  if (monthlyValues.length === 0) return 0;
+
+  if (monthlyValues.length === 1) return monthlyValues[0];
+
+  let sumChanges = 0;
+
+  for (let i = 1; i < monthlyValues.length; i++) {
+    sumChanges = monthlyValues[i] - monthlyValues[i - 1];
+  }
+
+  const drift = sumChanges / (monthlyValues.length - 1);
+
+  const lastValue = monthlyValues[monthlyValues.length - 1];
+
+  return lastValue + drift;
+}
+
+function predictClustersWithDrift(clusteredData: Cluster): number[] {
+  return Object.values(clusteredData).map(cluster => {
+    const monthlyValues = aggregateClusterByMonth(cluster);
+
+    return randomWalkWithDrift(monthlyValues);
+  });
+}
+
 export default function wageCostsPrediction(): PredictionWageResult {
   const data: WagesData = prepareWageCostData();
 
@@ -438,7 +761,9 @@ export default function wageCostsPrediction(): PredictionWageResult {
     oldCentroids = newCentroids;
   }
 
-  return { Centroids: newCentroids, Cluster: clusteredData };
+  const predictedCentroids = predictClustersWithDrift(clusteredData);
+
+  return { Centroids: predictedCentroids, Cluster: clusteredData };
 }
 
 /*
@@ -458,12 +783,12 @@ export default function wageCostsPrediction(): PredictionWageResult {
 */
 
 /*
- Další nevýhodou je u metody k-meansto, že je velmi citlivá na odlehlápozorování.
+ Další nevýhodou je u metody k-meansto, že je velmi citlivá na odlehlá pozorování.
  Tuto nevýhodu se budeme snažit minimalizovat tím, že z odhadu vynecháme velmi nízké
- mzdové výdaje, které budou vůči zbylým výdajům zanedbatelné.
+ mzdové výdaje, které budou vůči zbylým výdajům zanedbatelné. - neaplikovano
 */
 
-// jako hraniční hodnota je vedená 100 000 Kč, mi si ji určíme dle naší simulace/analýzy
+// jako hraniční hodnota je vedená 100 000 Kč, mi si ji určíme dle naší simulace/analýzy - neaplikovano
 
 /*
  Následně potřebujeme každému shluku přiřadit částku. Abychom se vyvarovali vý
@@ -480,12 +805,12 @@ export default function wageCostsPrediction(): PredictionWageResult {
 /*
  Problémem této metody je to, že neumíme rozlišit, která platba půjde na kterou měnu,
  všechny platby by tedy byly v českých korunách. Dále tu také nejsou zohledněny platby,
- jejichž frekvence je menší než jeden měsíc.
+ jejichž frekvence je menší než jeden měsíc. - při update, nechali jsme v jedne castce (neaplikovano)
 */
 
 /*
  Medián tedy v tomto případě
  není příliš vhodným nástrojem.Zkusíme použít nástroj, který bere data více jako časovou
  řadu a dává větší váhu na poslední pozorování.Zkusíme již popsanou náhodnou procházku
- sdriftem.
+ sdriftem. 
 */
