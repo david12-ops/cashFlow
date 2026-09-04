@@ -4,7 +4,7 @@ export const InvoiceItemSchema = z.object({
   DueDate: z.date(),
   AmountCze: z.number(),
   AmountPaidCze: z.number(),
-  PaymentDelay: z.number(),
+  PaymentDelay: z.number().nullable(),
 });
 
 export const InvoicesDataSchema = z.array(InvoiceItemSchema);
