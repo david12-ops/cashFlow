@@ -1,4 +1,8 @@
-import { InvoicesData } from "@/zod-schemas/invoicesDataTypes";
+import {
+  DataForHoltBestParams,
+  HaltPredictionData,
+  InvoicesData,
+} from "@/zod-schemas/invoicesDataTypes";
 
 function prepareInvoiceData(): InvoicesData {
   const invoiceData: InvoicesData = [];
@@ -57,27 +61,6 @@ function prepareInvoiceData(): InvoicesData {
   return invoiceData;
 }
 
-function exponentialSmoothing(aggregatedData: number[], alpha: number) {
-  const smooothValues: number[] = [];
-  let currentVal;
-
-  for (let i = 0; i < aggregatedData.length; i++) {
-    if (i === 0) {
-      currentVal = aggregatedData[0];
-      smooothValues[i] = currentVal;
-    } else {
-      currentVal = aggregatedData[i];
-      const previousSmoothVal = smooothValues[i - 1];
-
-      const newSmoothValue =
-        alpha * currentVal + (1 - alpha) * previousSmoothVal;
-      smooothValues[i] = newSmoothValue;
-    }
-  }
-
-  return smooothValues;
-}
-
 function aggregateInvoicesByMonth(data: InvoicesData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
@@ -109,13 +92,34 @@ function aggregateInvoicesByMonth(data: InvoicesData): number[] {
 }
 
 // SES
+function exponentialSmoothing(data: number[], alpha: number) {
+  const smooothValues: number[] = [];
+  let currentVal;
+
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) {
+      currentVal = data[0];
+      smooothValues[i] = currentVal;
+    } else {
+      currentVal = data[i];
+      const previousSmoothVal = smooothValues[i - 1];
+
+      const newSmoothValue =
+        alpha * currentVal + (1 - alpha) * previousSmoothVal;
+      smooothValues[i] = newSmoothValue;
+    }
+  }
+
+  return smooothValues;
+}
+
 function pickBestAlpha(aggregatedData: number[]): number {
   let bestAlpha = 0;
   let bestErrorValue = Number.MAX_VALUE;
 
-  for (let i = 0.1; i < 1; i += 0.1) {
+  for (let alpha = 0.1; alpha < 1; alpha += 0.1) {
     let totalError = 0;
-    const smoothValues = exponentialSmoothing(aggregatedData, i);
+    const smoothValues = exponentialSmoothing(aggregatedData, alpha);
 
     for (let x = 0; x < aggregatedData.length; x++) {
       const errorValue = Math.abs(aggregatedData[x] - smoothValues[x]);
@@ -125,7 +129,7 @@ function pickBestAlpha(aggregatedData: number[]): number {
     const avaregeError = totalError / aggregatedData.length;
 
     if (avaregeError < bestErrorValue) {
-      bestAlpha = i;
+      bestAlpha = alpha;
       bestErrorValue = avaregeError;
     }
   }
@@ -134,8 +138,114 @@ function pickBestAlpha(aggregatedData: number[]): number {
 }
 
 //Holtovo exponenciální vyhlazování
+function computeAIC(rezidua: number[]): number {
+  const k = 2; // tady jeste uvidime
+
+  const sse = rezidua.map(numb => numb * numb);
+  const sseSum = sse.reduce((acc, val) => acc + val, 0);
+
+  return rezidua.length * Math.log(sseSum / rezidua.length) + 2 * k;
+}
+
+function pickBestHoltParameters(aggregatedData: number[]): {
+  bestAlpha: number;
+  bestBeta: number;
+} {
+  let values: DataForHoltBestParams = {
+    alpha: 0,
+    beta: 0,
+    holtValue: { level: 0, trend: 0, rezidua: [] },
+  };
+
+  let bestParams = {
+    bestAlpha: 0,
+    bestBeta: 0,
+  };
+
+  let bestAic = Number.MAX_VALUE;
+
+  for (let alpha = 0.1; alpha < 1; alpha += 0.1) {
+    for (let beta = 0.1; beta < 1; beta += 0.1) {
+      const holtValue = holtExponentialSmoothing(aggregatedData, alpha, beta);
+      values = { alpha, beta, holtValue };
+
+      const aic = computeAIC(values.holtValue.rezidua);
+
+      if (aic < bestAic) {
+        bestAic = aic;
+        bestParams = { bestAlpha: alpha, bestBeta: beta };
+      }
+    }
+  }
+
+  return bestParams;
+}
+
+function holtExponentialSmoothing(
+  aggregatedData: number[],
+  alpha: number,
+  beta: number
+): { level: number; trend: number; rezidua: number[] } {
+  const rezidua: number[] = [];
+  const values = [{ level: 0, trend: 0, rezidua }];
+  let currentLevel;
+  let trend;
+
+  for (let i = 0; i < aggregatedData.length; i++) {
+    if (i === 0) {
+      currentLevel = aggregatedData[i];
+      trend = aggregatedData[i + 1] - aggregatedData[i];
+
+      values[i] = {
+        level: currentLevel,
+        trend,
+        rezidua,
+      };
+    } else {
+      currentLevel =
+        alpha * aggregatedData[i] +
+        (1 - alpha) * (values[i - 1].level + values[i - 1].trend);
+      trend =
+        beta * (currentLevel - values[i - 1].level) +
+        (1 - beta) * values[i - 1].trend;
+      rezidua[i] = aggregatedData[i] - (currentLevel + trend);
+
+      values[i] = {
+        level: currentLevel,
+        trend,
+        rezidua,
+      };
+    }
+  }
+
+  return values[values.length - 1];
+}
+
+function haltPrediction(
+  countOfFutureMonths: number,
+  lastLevelAndTrend: { level: number; trend: number },
+  lastDate: string
+): HaltPredictionData {
+  const [year, month] = lastDate.split("-");
+  const { level, trend } = lastLevelAndTrend;
+
+  const predictionData: HaltPredictionData = [];
+
+  for (let i = 1; i <= countOfFutureMonths; i++) {
+    const date = new Date(Number(year), Number(month) + i);
+    const value = level + i * trend;
+
+    predictionData.push({
+      date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+      value,
+    });
+  }
+
+  return predictionData;
+}
 
 //Holt-Winters - falesna data mohou delat brikule
+// Vytvořit intervaly spolehlivosti
 
 function issuedInvoicesPrediction() {
   const data: InvoicesData = prepareInvoiceData();
@@ -143,9 +253,35 @@ function issuedInvoicesPrediction() {
   const aggregatedData = aggregateInvoicesByMonth(data);
   const bestAlpha = pickBestAlpha(aggregatedData);
 
-  const smoothedData = exponentialSmoothing(aggregatedData, bestAlpha);
+  const smoothedDataBySSE = exponentialSmoothing(aggregatedData, bestAlpha);
+
+  const bestParams = pickBestHoltParameters(aggregatedData);
+  const smoothedDataByHolt = holtExponentialSmoothing(
+    aggregatedData,
+    bestParams.bestAlpha,
+    bestParams.bestBeta
+  );
+  const prediction = haltPrediction(
+    6,
+    {
+      level: smoothedDataByHolt.level,
+      trend: smoothedDataByHolt.trend,
+    },
+    new Date(2025, 11, 1).toString()
+  );
 
   console.log("invoice data " + data);
-  console.log("smoothed data " + smoothedData);
-  console.log("prediction " + smoothedData[smoothedData.length - 1]);
+  console.log("smoothed data " + smoothedDataBySSE);
+  console.log("prediction " + smoothedDataBySSE[smoothedDataBySSE.length - 1]);
+
+  console.log("smoothed data by Holt" + smoothedDataByHolt);
+  console.log("prediction by Holt" + prediction);
 }
+
+// Tvoje funkce:
+
+// alpha → zkoušíš 9 hodnot
+// beta → zkoušíš 9 hodnot
+// level → pouze inicializuješ z první hodnoty dat
+// trend → pouze inicializuješ z prvních dvou hodnot dat
+// rezidua → nejsou parametrem modelu, ale chybami
