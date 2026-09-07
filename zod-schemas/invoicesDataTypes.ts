@@ -21,6 +21,20 @@ export const DataForHoltBestParamsSchema = z.object({
   holtValue: ParamsFromHoltAlgorithmSchema,
 });
 
+export const ParamsFromHoltWinterAlgorithmSchema = z.object({
+  level: z.number(),
+  trend: z.number(),
+  seasonalVal: z.number(),
+  rezidua: z.array(z.number()),
+});
+
+export const DataForHoltWinterBestParamsSchema = z.object({
+  alpha: z.number(),
+  beta: z.number(),
+  gama: z.number(),
+  holtWinterValue: ParamsFromHoltWinterAlgorithmSchema,
+});
+
 export const HaltPredictionDataSchema = z.array(
   z.object({ date: z.string(), value: z.number() })
 );
@@ -32,3 +46,9 @@ export type ParamsFromHoltAlgorithm = z.infer<
 >;
 export type DataForHoltBestParams = z.infer<typeof DataForHoltBestParamsSchema>;
 export type HaltPredictionData = z.infer<typeof HaltPredictionDataSchema>;
+export type ParamsFromHoltWinterAlgorithm = z.infer<
+  typeof ParamsFromHoltWinterAlgorithmSchema
+>;
+export type DataForHoltWinterBestParams = z.infer<
+  typeof DataForHoltWinterBestParamsSchema
+>;
