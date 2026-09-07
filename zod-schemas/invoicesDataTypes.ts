@@ -24,7 +24,7 @@ export const DataForHoltBestParamsSchema = z.object({
 export const ParamsFromHoltWinterAlgorithmSchema = z.object({
   level: z.number(),
   trend: z.number(),
-  seasonalVal: z.number(),
+  seasonalValues: z.array(z.number()),
   rezidua: z.array(z.number()),
 });
 

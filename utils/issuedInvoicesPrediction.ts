@@ -164,6 +164,8 @@ function sesPrediction(
   value: number;
 }[] {
   //TODO
+  for (let i = 1; i <= countOfFutureMonths; i++) {}
+
   return [];
 }
 
@@ -264,7 +266,7 @@ function pickBestHoltWintersParameters(aggregatedData: number[]): {
     alpha: 0,
     beta: 0,
     gama: 0,
-    holtWinterValue: { level: 0, trend: 0, seasonalVal: 0, rezidua: [] },
+    holtWinterValue: { level: 0, trend: 0, seasonalValues: [], rezidua: [] },
   };
 
   let bestParams = {
@@ -329,27 +331,41 @@ function holtWintersExponentialSmoothing(
   alpha: number,
   beta: number,
   gama: number
-): { level: number; trend: number; seasonalVal: number; rezidua: number[] } {
+): {
+  level: number;
+  trend: number;
+  seasonalValues: number[];
+  rezidua: number[];
+} {
   const rezidua: number[] = [];
-  const values = [{ level: 0, trend: 0, seasonalVal: 0, rezidua }];
 
   let currentLevel;
   let trend;
-  let seasonalVal;
 
   const seasonalityValues = computeSeasonality(aggregatedData);
+  const values = [
+    { level: 0, trend: 0, seasonalValues: seasonalityValues, rezidua },
+  ];
 
   for (let i = 0; i < aggregatedData.length; i++) {
+    const seasonalIndex = i % 12;
+
     if (i === 0) {
       currentLevel = aggregatedData[i];
       trend = (aggregatedData[11] - aggregatedData[i]) / 11;
-      seasonalVal = seasonalityValues[i];
 
-      values[i] = { level: currentLevel, trend, seasonalVal, rezidua };
+      values[i] = {
+        level: currentLevel,
+        trend,
+        seasonalValues: seasonalityValues,
+        rezidua,
+      };
     } else if (i < 12) {
       rezidua[i] =
         aggregatedData[i] -
-        (values[i - 1].level + values[i - 1].trend + seasonalityValues[i]);
+        (values[i - 1].level +
+          values[i - 1].trend +
+          seasonalityValues[seasonalIndex]);
 
       currentLevel =
         alpha * aggregatedData[i] +
@@ -357,12 +373,11 @@ function holtWintersExponentialSmoothing(
       trend =
         beta * (currentLevel - values[i - 1].level) +
         (1 - beta) * values[i - 1].trend;
-      seasonalVal = seasonalityValues[i];
 
       values[i] = {
         level: currentLevel,
         trend,
-        seasonalVal,
+        seasonalValues: seasonalityValues,
         rezidua,
       };
     } else {
@@ -370,7 +385,7 @@ function holtWintersExponentialSmoothing(
         aggregatedData[i] -
         (values[i - 1].level +
           values[i - 1].trend +
-          values[i - 12].seasonalVal);
+          values[i - 12].seasonalValues[seasonalIndex]);
 
       currentLevel =
         alpha * aggregatedData[i] +
@@ -378,16 +393,16 @@ function holtWintersExponentialSmoothing(
       trend =
         beta * (currentLevel - values[i - 1].level) +
         (1 - beta) * values[i - 1].trend;
-      seasonalVal =
+      const newSeasonalValue =
         gama * (aggregatedData[i] - currentLevel) +
-        (1 - gama) * seasonalityValues[i - 12];
+        (1 - gama) * seasonalityValues[seasonalIndex];
 
-      seasonalityValues[i] = seasonalVal;
+      seasonalityValues[seasonalIndex] = newSeasonalValue;
 
       values[i] = {
         level: currentLevel,
         trend,
-        seasonalVal,
+        seasonalValues: seasonalityValues,
         rezidua,
       };
     }
@@ -404,17 +419,17 @@ function holtPrediction(
   lastLevelTrendSeasonalVal?: {
     level: number;
     trend: number;
-    seasonalVal: number;
+    seasonalValues: number[];
   }
 ): HaltPredictionData {
-  const [year, month] = lastDate.split("-");
+  const [year, month] = lastDate.split("-").map(Number);
   let predictionData: HaltPredictionData = [];
 
   if (type === "holt" && lastLevelAndTrend) {
     const { level, trend } = lastLevelAndTrend;
 
     for (let i = 1; i <= countOfFutureMonths; i++) {
-      const date = new Date(Number(year), Number(month) + i);
+      const date = new Date(year, month + i);
       const value = level + i * trend;
 
       predictionData.push({
@@ -423,8 +438,21 @@ function holtPrediction(
       });
     }
   } else if (type === "holt-winter" && lastLevelTrendSeasonalVal) {
-    //TODO
-    return [];
+    for (let i = 1; i <= countOfFutureMonths; i++) {
+      const date = new Date(year, month + i);
+      const seasonalValue =
+        lastLevelTrendSeasonalVal.seasonalValues[(month - 1 + i) % 12];
+
+      const value =
+        lastLevelTrendSeasonalVal.level +
+        i * lastLevelTrendSeasonalVal.trend +
+        seasonalValue;
+
+      predictionData.push({
+        date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+        value,
+      });
+    }
   } else {
     console.error("Uknown holt algorithm type -" + `${type}`);
     predictionData = [];
@@ -483,7 +511,7 @@ function issuedInvoicesPrediction() {
     {
       level: smoothedDataByHoltWinter.level,
       trend: smoothedDataByHoltWinter.trend,
-      seasonalVal: smoothedDataByHoltWinter.seasonalVal,
+      seasonalValues: smoothedDataByHoltWinter.seasonalValues,
     }
   );
 
