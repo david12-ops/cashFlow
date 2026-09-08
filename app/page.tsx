@@ -2,17 +2,18 @@ import { createClient } from "@/supabase/server";
 import { cookies } from "next/headers";
 import dphPrediction from "@/utils/dphPrediction";
 import wageCostsPrediction from "@/utils/wageCostsPrediction";
+import issuedInvoicesPrediction from "@/utils/issuedInvoicesPrediction";
 
 export default async function Page() {
   const cookieStore = cookies();
   const supabase = createClient(cookieStore);
-  const monthlyDPHPredNumber = dphPrediction();
-  // const quarterlyDPHPredNumber = dphPrediction("QUARTERLY");
-
-  const wagePrediction = wageCostsPrediction();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: todos } = await supabase.from("todos").select();
+
+  const monthlyDPHPredNumber = dphPrediction();
+  const wagePrediction = wageCostsPrediction();
+  const invoicePrediction = issuedInvoicesPrediction();
 
   return (
     <div
@@ -30,17 +31,56 @@ export default async function Page() {
           justifyContent: "space-between",
         }}
       >
-        <h1 style={{ textAlign: "center" }}>Monthly (DPH)</h1>
-        {/* {<ChartComp text="ahoj" />} */}
-        <p style={{ textAlign: "center", fontSize: "30px" }}>
-          {monthlyDPHPredNumber}
-        </p>
+        <div>
+          <h1 style={{ textAlign: "center" }}>Monthly (DPH)</h1>
+          {/* {<ChartComp text="ahoj" />} */}
+          <p style={{ textAlign: "center", fontSize: "30px" }}>
+            {monthlyDPHPredNumber}
+          </p>
+        </div>
 
-        <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
-        {/* {<ChartComp text="ahoj" />} */}
-        <p style={{ textAlign: "center", fontSize: "30px" }}>
-          {wagePrediction}
-        </p>
+        <div>
+          <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
+          {wagePrediction.Centroids.map((centroid, index) => (
+            <div key={index} style={{ marginBottom: "20px" }}>
+              <h3>Centroid: {centroid.toFixed(2)}</h3>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                {wagePrediction.Cluster[index].map((dataPoint, dataIndex) => (
+                  <div key={dataIndex}>
+                    <p>DimDateId - {dataPoint.DimDateId}</p>
+                    <p>
+                      TransactionDate -{" "}
+                      {dataPoint.TransactionDate.toDateString()}
+                    </p>
+                    <p>BaseAmount - {dataPoint.BaseAmount}</p>
+                    <p>Account - {dataPoint.Account}</p>
+                    <p>Division - {dataPoint.Division}</p>
+                    <p>Currency - {dataPoint.Currency}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h1 style={{ textAlign: "center" }}>Invoice prediction</h1>
+        {invoicePrediction.map((item, index) => (
+          <div key={index} style={{ marginBottom: "20px" }}>
+            <p>Date: {item.date}</p>
+            <p>Lower Bound: {item.lowerBound}</p>
+            <p>Prediction: {item.prediction}</p>
+            <p>Upper Bound: {item.upperBound}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
