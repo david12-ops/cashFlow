@@ -359,14 +359,7 @@ function monthlyDPHPrediction(): number {
   if (Object.values(data).some(days => days.length === 0)) return 0;
 
   const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
-    aggregateMonthlyDPHvaluesbyDay(data) as {
-      aggNumbersInPercent: {
-        Date_val: Date;
-        Dph_val: number;
-      }[];
-      activeMonth: { Date_val: Date; Dph_val: number }[];
-      sumOfActiveMonth: number;
-    };
+    aggregateMonthlyDPHvaluesbyDay(data);
 
   const historyPercentage = aggNumbersInPercent
     .slice(0, activeMonth.length)
@@ -406,6 +399,9 @@ export default function dphPrediction(): number {
   // Bereme pro prdikci castku celkoveho dph minuleho mesice k vypoctu toho soucasneho
   // Tigger na prepocet nove dodanych v soucasnym i minulym mesici
   // zkontroluj cisla - vypada to dobře
+
+  // dphPrediction("QUARTERLY");
+  // TODO - lepsi simulace dat
 
   return monthlyDPHPrediction();
 }
