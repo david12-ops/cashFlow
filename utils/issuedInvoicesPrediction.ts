@@ -1,8 +1,10 @@
 import {
   DataForHoltBestParams,
   DataForHoltWinterBestParams,
-  HaltPredictionData,
+  PredictionData,
   InvoicesData,
+  IntervalData,
+  DataForSSEbestAplha,
 } from "@/zod-schemas/invoicesDataTypes";
 
 function prepareInvoiceData(): InvoicesData {
@@ -99,9 +101,18 @@ function aggregateInvoicesByMonth(data: InvoicesData): number[] {
     });
 }
 
+function computeAIC(rezidua: number[], paramsCount: number): number {
+  const k = paramsCount; // tady jeste uvidime
+
+  const sse = rezidua.map(numb => numb * numb);
+  const sseSum = sse.reduce((acc, val) => acc + val, 0);
+
+  return rezidua.length * Math.log(sseSum / rezidua.length) + 2 * k;
+}
+
 // SES
 // picked by MAE
-function pickBestAlpha(aggregatedData: number[]): number {
+function pickBestAlphaByMAE(aggregatedData: number[]): number {
   let bestAlpha = 0;
   let bestErrorValue = Number.MAX_VALUE;
 
@@ -125,6 +136,33 @@ function pickBestAlpha(aggregatedData: number[]): number {
   }
 
   return bestAlpha;
+}
+
+function pickBestAlphaByAIC(aggregatedData: number[]): {
+  bestAlpha: number;
+  bestAic: number;
+} {
+  let values: DataForSSEbestAplha = {
+    smoothedValues: [],
+    rezidua: [],
+  };
+
+  let bestAlpha = 0;
+
+  let bestAic = Number.MAX_VALUE;
+
+  for (let alpha = 0.1; alpha < 1; alpha += 0.1) {
+    values = exponentialSmoothing(aggregatedData, alpha);
+
+    const aic = computeAIC(values.rezidua, 1);
+
+    if (aic < bestAic) {
+      bestAlpha = alpha;
+      bestAic = aic;
+    }
+  }
+
+  return { bestAic, bestAlpha };
 }
 
 function exponentialSmoothing(
@@ -158,30 +196,34 @@ function exponentialSmoothing(
 function sesPrediction(
   countOfFutureMonths: number,
   lastDate: string,
-  sseData: { smoothedValues: number[]; rezidua: number[] }
+  sesData: { smoothedValues: number[]; rezidua: number[] }
 ): {
   date: string;
   value: number;
 }[] {
-  //TODO
-  for (let i = 1; i <= countOfFutureMonths; i++) {}
+  const [year, month] = lastDate.split("-").map(Number);
 
-  return [];
+  const predictionData: PredictionData = [];
+  const lastSmoothedValue =
+    sesData.smoothedValues[sesData.smoothedValues.length - 1];
+
+  for (let i = 1; i <= countOfFutureMonths; i++) {
+    const date = new Date(year, month + i);
+
+    predictionData.push({
+      date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+      value: lastSmoothedValue,
+    });
+  }
+
+  return predictionData;
 }
 
 //Holtovo exponenciální vyhlazování
-function computeAIC(rezidua: number[], paramsCount: number): number {
-  const k = paramsCount; // tady jeste uvidime
-
-  const sse = rezidua.map(numb => numb * numb);
-  const sseSum = sse.reduce((acc, val) => acc + val, 0);
-
-  return rezidua.length * Math.log(sseSum / rezidua.length) + 2 * k;
-}
-
 function pickBestHoltParameters(aggregatedData: number[]): {
   bestAlpha: number;
   bestBeta: number;
+  bestAic: number;
 } {
   let values: DataForHoltBestParams = {
     alpha: 0,
@@ -210,7 +252,7 @@ function pickBestHoltParameters(aggregatedData: number[]): {
     }
   }
 
-  return bestParams;
+  return { ...bestParams, bestAic };
 }
 
 function holtExponentialSmoothing(
@@ -261,6 +303,7 @@ function pickBestHoltWintersParameters(aggregatedData: number[]): {
   bestAlpha: number;
   bestBeta: number;
   bestGama: number;
+  bestAic: number;
 } {
   let values: DataForHoltWinterBestParams = {
     alpha: 0,
@@ -308,7 +351,7 @@ function pickBestHoltWintersParameters(aggregatedData: number[]): {
     }
   }
 
-  return bestParams;
+  return { ...bestParams, bestAic };
 }
 
 function computeSeasonality(aggregatedData: number[]): number[] {
@@ -421,9 +464,9 @@ function holtPrediction(
     trend: number;
     seasonalValues: number[];
   }
-): HaltPredictionData {
+): PredictionData {
   const [year, month] = lastDate.split("-").map(Number);
-  let predictionData: HaltPredictionData = [];
+  let predictionData: PredictionData = [];
 
   if (type === "holt" && lastLevelAndTrend) {
     const { level, trend } = lastLevelAndTrend;
@@ -461,28 +504,109 @@ function holtPrediction(
   return predictionData;
 }
 
-function issuedInvoicesPrediction() {
+function pickbestPredictionModel(
+  values: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[]
+): "holt" | "holt-winter" | "ses" {
+  //jde i pomoci reduce
+  // const indexOfBestModel = values.reduce(
+  //   (best, current, currentIndex) =>
+  //     current.aicValue < values[best].aicValue ? currentIndex : best,
+  //   0
+  // );
+
+  // return values[indexOfBestModel].model;
+
+  const aics = values.map(itm => {
+    return Number(itm.aicValue);
+  });
+
+  let bestModel: "holt" | "holt-winter" | "ses" = "ses";
+
+  switch (aics.indexOf(Math.min(...aics))) {
+    case 0:
+      bestModel = values[0].model;
+      break;
+    case 1:
+      bestModel = values[1].model;
+      break;
+    case 2:
+      bestModel = values[2].model;
+      break;
+  }
+
+  return bestModel;
+}
+
+// Intervaly spolehlivosti
+function computeConfidenceIntervals(
+  rezidua: number[],
+  prediction: { date: string; value: number }[]
+): IntervalData {
+  const data: IntervalData = [];
+
+  const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
+  const meanOfRezidua = sumOfRezidua / rezidua.length;
+  const z = 1.96; // pro 95% interval spolehlivosti
+
+  let sumSquaredDeviations = 0;
+  for (let i = 0; i < rezidua.length; i++) {
+    sumSquaredDeviations += Math.pow(rezidua[i] - meanOfRezidua, 2);
+  }
+
+  for (let i = 0; i < prediction.length; i++) {
+    const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);
+    const h = i + 1; // kolikaty mesic
+
+    const lowerBound = prediction[i].value - z * sigma * Math.sqrt(h);
+    const upperBound = prediction[i].value + z * sigma * Math.sqrt(h);
+
+    data.push({
+      date: prediction[i].date,
+      lowerBound,
+      prediction: prediction[i].value,
+      upperBound,
+    });
+  }
+
+  return data;
+}
+
+export default function issuedInvoicesPrediction(): IntervalData {
   const data: InvoicesData = prepareInvoiceData();
 
   const aggregatedData = aggregateInvoicesByMonth(data);
 
-  // SSE
-  const bestAlpha = pickBestAlpha(aggregatedData);
-  const smoothedDataBySSE = exponentialSmoothing(aggregatedData, bestAlpha);
+  const trainingData = aggregatedData.slice(0, 48);
+  const testData = aggregatedData.slice(48, 60);
 
-  const predictionSSE = sesPrediction(
+  const aics: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[] =
+    [];
+
+  // SES
+  const bestAlphaPickedByMAE = pickBestAlphaByMAE(trainingData);
+  const bestSESparams = pickBestAlphaByAIC(trainingData);
+  const smoothedDataBySES = exponentialSmoothing(
+    trainingData,
+    bestSESparams.bestAlpha
+  );
+
+  aics.push({ model: "ses", aicValue: bestSESparams.bestAic });
+
+  const predictionSES = sesPrediction(
     6,
     new Date(2025, 11, 1).toString(),
-    smoothedDataBySSE
+    smoothedDataBySES
   );
 
   // Holt
-  const bestParams = pickBestHoltParameters(aggregatedData);
+  const bestHoltParams = pickBestHoltParameters(trainingData);
   const smoothedDataByHolt = holtExponentialSmoothing(
-    aggregatedData,
-    bestParams.bestAlpha,
-    bestParams.bestBeta
+    trainingData,
+    bestHoltParams.bestAlpha,
+    bestHoltParams.bestBeta
   );
+
+  aics.push({ model: "holt", aicValue: bestHoltParams.bestAic });
 
   const predictionHolt = holtPrediction(
     6,
@@ -495,13 +619,15 @@ function issuedInvoicesPrediction() {
   );
 
   // Holt-Winter
-  const bestWinterParams = pickBestHoltWintersParameters(aggregatedData);
+  const bestHoltWinterParams = pickBestHoltWintersParameters(trainingData);
   const smoothedDataByHoltWinter = holtWintersExponentialSmoothing(
-    aggregatedData,
-    bestWinterParams.bestAlpha,
-    bestWinterParams.bestBeta,
-    bestWinterParams.bestGama
+    trainingData,
+    bestHoltWinterParams.bestAlpha,
+    bestHoltWinterParams.bestBeta,
+    bestHoltWinterParams.bestGama
   );
+
+  aics.push({ model: "holt-winter", aicValue: bestHoltWinterParams.bestAic });
 
   const predictionHoltWinter = holtPrediction(
     6,
@@ -517,14 +643,50 @@ function issuedInvoicesPrediction() {
 
   console.log("invoice data " + data);
 
-  console.log("smoothed data " + smoothedDataBySSE);
-  console.log("prediction " + predictionSSE);
+  console.log("best aplpha picked by MAE " + bestAlphaPickedByMAE);
+  console.log("smoothed data " + smoothedDataBySES);
+  console.log("prediction " + predictionSES);
 
   console.log("smoothed data by Holt" + smoothedDataByHolt);
   console.log("prediction by Holt" + predictionHolt);
 
   console.log("smoothed data by Holt-Winter" + smoothedDataByHoltWinter);
   console.log("prediction by Holt" + predictionHoltWinter);
+
+  const bestModel = pickbestPredictionModel(aics);
+
+  console.log("best model " + bestModel);
+
+  let confidenceInterval = [];
+  switch (bestModel) {
+    case "holt":
+      confidenceInterval = computeConfidenceIntervals(
+        smoothedDataByHolt.rezidua,
+        predictionHolt
+      );
+      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("test data " + testData);
+      return confidenceInterval;
+    case "holt-winter":
+      confidenceInterval = computeConfidenceIntervals(
+        smoothedDataByHoltWinter.rezidua,
+        predictionHoltWinter
+      );
+      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("test data " + testData);
+      return confidenceInterval;
+    case "ses":
+      confidenceInterval = computeConfidenceIntervals(
+        smoothedDataBySES.rezidua,
+        predictionSES
+      );
+      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("test data " + testData);
+      return confidenceInterval;
+    default:
+      console.error("Uknown model " + `${bestModel}`);
+      return [];
+  }
 }
 
 // Tvoje funkce:
