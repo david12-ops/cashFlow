@@ -65,7 +65,7 @@ function prepareLoanData(): LoansData {
   return loanData;
 }
 
-function providedLoansPrediction() {
+export default function providedLoansPrediction() {
   const data: LoansData = prepareLoanData();
 
   console.log("loan data " + data);
