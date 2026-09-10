@@ -9,6 +9,7 @@ function prepareDPHData(
   const monthDaysAcrossPastYears: DphData = {};
 
   const today = new Date();
+  const baseValue = 100000;
 
   if (period === "MONTHLY") {
     for (let i = 0; i < days; i++) {
@@ -18,7 +19,14 @@ function prepareDPHData(
 
       if (!monthDaysInOneYear[keyDate]) monthDaysInOneYear[keyDate] = [];
 
-      const dph_val = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
+      const dph_val = computeDPHvalue(
+        {
+          baseValue,
+          day: i,
+          countOfdays: days,
+        },
+        date
+      );
       monthDaysInOneYear[keyDate].push({ Date_val: date, Dph_val: dph_val });
     }
 
@@ -53,7 +61,14 @@ function prepareDPHData(
           if (!monthDaysAcrossPastYears[keyDate])
             monthDaysAcrossPastYears[keyDate] = [];
 
-          const dph_val = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
+          const dph_val = computeDPHvalue(
+            {
+              baseValue,
+              day,
+              countOfdays: 365,
+            },
+            date
+          );
           monthDaysAcrossPastYears[keyDate].push({
             Date_val: date,
             Dph_val: dph_val,
@@ -66,6 +81,29 @@ function prepareDPHData(
   }
 
   return [];
+}
+
+function computeDPHvalue(
+  valuesFortrend: {
+    baseValue: number;
+    day: number;
+    countOfdays: number;
+  },
+  date: Date
+): number {
+  const { baseValue, day, countOfdays } = valuesFortrend;
+
+  const trend = baseValue * Math.pow(1 + 0.05, day / countOfdays);
+
+  const dayOfYear = Math.floor(
+    (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
+  const seasonKoeficient = 1 + 0.15 * Math.sin((2 * Math.PI * dayOfYear) / 365);
+
+  const randomFactor = 0.9 + Math.random() * 0.2;
+
+  return trend * seasonKoeficient * randomFactor;
 }
 
 function daysToAddToNextMonth(date: Date): number {
@@ -319,17 +357,10 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
       sumOfActiveMonth: 0,
     };
 
-  // const sumOfdphInMonths = closedMoths.map(monthData => {
-  //   return monthData.reduce((sum, val) => (sum += val.Dph_val), 0);
-  // });
-
   const sumOfdphInActiveMonth = activeMonth.reduce(
     (sum, val) => (sum += val.Dph_val),
     0
   );
-
-  // console.log("sumOfdphInMonths", sumOfdphInMonths);
-  // console.log("sumOfdphInActiveMonth", sumOfdphInActiveMonth);
 
   const aggregatedClosedMonth =
     aggregateClosedMonthsDPHvaluesbyDay(closedMoths);
@@ -353,10 +384,76 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   };
 }
 
+function prepareTestingData(data: DphData): {
+  data: Record<
+    string,
+    {
+      Date_val: Date;
+      Dph_val: number;
+    }[]
+  >;
+  key: string;
+} {
+  const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as MonthData;
+
+  if (!activeMonth || activeMonth.length === 0) {
+    console.warn(
+      "No active month found in data, prediction cannot be performed correctly."
+    );
+    return { data: {}, key: "" };
+  }
+
+  const activeDateInActiveMonth = activeMonth![0].Date_val;
+  const keyDate =
+    activeDateInActiveMonth.getFullYear() +
+    "-" +
+    activeDateInActiveMonth.getMonth();
+
+  const daysOfAciveMonth = getDaysInMonths(activeDateInActiveMonth);
+
+  const newData = prepareDPHData(daysOfAciveMonth, "MONTHLY");
+
+  const [key, values] = Object.entries(newData)[0];
+
+  console.log(key);
+  console.log(values);
+
+  const newMonth: Record<
+    string,
+    {
+      Date_val: Date;
+      Dph_val: number;
+    }[]
+  > = {};
+
+  newMonth[keyDate] = [];
+
+  values.forEach(itm => {
+    newMonth[keyDate].push({
+      ...itm,
+      Date_val: new Date(
+        itm.Date_val.getFullYear(),
+        itm.Date_val.getMonth() + 1,
+        itm.Date_val.getDate()
+      ),
+    });
+  });
+
+  return { data: newMonth, key: keyDate };
+}
+
 function monthlyDPHPrediction(): number {
-  const data = prepareDPHData(93, "MONTHLY") as DphData;
+  let data = prepareDPHData(124, "MONTHLY") as DphData;
 
   if (Object.values(data).some(days => days.length === 0)) return 0;
+
+  // Its for testing data, we need to prepare the last active month, and then change the days
+  const testingData = prepareTestingData(data);
+
+  data = {
+    ...Object.fromEntries(Object.entries(data).slice(0, -1)),
+    ...testingData.data,
+  };
 
   const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
     aggregateMonthlyDPHvaluesbyDay(data);
@@ -370,6 +467,12 @@ function monthlyDPHPrediction(): number {
   console.log(
     "sum of percent",
     aggNumbersInPercent.reduce((sum, day) => sum + day.Dph_val, 0)
+  );
+
+  console.log("testingData", testingData);
+  console.log(
+    "sum from testingData",
+    testingData.data[testingData.key].reduce((sum, day) => sum + day.Dph_val, 0)
   );
   console.log("predicted", predictedDph);
 
