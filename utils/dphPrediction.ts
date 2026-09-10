@@ -504,7 +504,6 @@ export default function dphPrediction(): number {
   // zkontroluj cisla - vypada to dobře
 
   // dphPrediction("QUARTERLY");
-  // TODO - lepsi simulace dat
 
   return monthlyDPHPrediction();
 }
