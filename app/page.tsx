@@ -2,7 +2,7 @@ import { createClient } from "@/supabase/server";
 import { cookies } from "next/headers";
 import dphPrediction from "@/utils/dphPrediction";
 import wageCostsPrediction from "@/utils/wageCostsPrediction";
-import issuedInvoicesPrediction from "@/utils/issuedInvoicesPrediction";
+import providedLoansPrediction from "@/utils/providedLoansPrediction";
 
 export default async function Page() {
   const cookieStore = cookies();
@@ -13,7 +13,7 @@ export default async function Page() {
 
   const monthlyDPHPredNumber = dphPrediction();
   const wagePrediction = wageCostsPrediction();
-  const invoicePrediction = issuedInvoicesPrediction();
+  const loanPrediction = providedLoansPrediction();
 
   return (
     <div
@@ -72,8 +72,8 @@ export default async function Page() {
       </div>
 
       <div>
-        <h1 style={{ textAlign: "center" }}>Invoice prediction</h1>
-        {invoicePrediction.map((item, index) => (
+        <h1 style={{ textAlign: "center" }}>Loan prediction</h1>
+        {loanPrediction.map((item, index) => (
           <div key={index} style={{ marginBottom: "20px" }}>
             <p>Date: {item.date}</p>
             <p>Lower Bound: {item.lowerBound}</p>
