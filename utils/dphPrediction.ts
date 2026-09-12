@@ -178,8 +178,8 @@ function getLastKey(data: DphData): string | undefined {
 function getMonths(
   data: DphData,
   period: "MONTHLY" | "QUARTERLY",
-  monthlyType?: "CLOSED" | "ACTIVE", // u quarterly vymyslet neco lepšího
-  quarterlyType?: "PAST_YEARS" | "CURRENT_YEAR"
+  monthlyType?: "CLOSED" | "ACTIVE",
+  quarterlyType?: "PAST_YEARS" | "CURRENT_YEAR" // Need to come up with something better quarterly
 ): MonthsData | MonthData | undefined {
   const lastClosedMonthKey = getLastKey(data);
   if (!lastClosedMonthKey) return [];
@@ -248,8 +248,8 @@ function normalizedInPercent(
     };
   });
 
-  // console.log("pocet dni v mesici " + activeMonthDaysCount);
-  // console.log("pocet uplynulych dnu aktivniho mesice " + activeDaysCount);
+  // console.log("number of days in the month " + activeMonthDaysCount);
+  // console.log("number of elapsed days of the active month " + activeDaysCount);
 
   const redistributed = redistributeExtraDays(
     dataInPercent,
@@ -278,7 +278,6 @@ function aggregateClosedMonthsDPHvaluesbyDay(
 
     const averageDphDay = sumOfDays / days.length;
 
-    // TODO - tady se mi to zatim nelibi
     aggregatedData.push({
       Date_val: new Date(
         days[days.length - 1].Date_val.getFullYear(),
@@ -297,10 +296,10 @@ function redistributeExtraDays(
   activeDaysCount: number,
   activeMonthDaysCount: number
 ): MonthData {
-  // historicke dny, ktere v aktualnim nemaji misto
+  // Historical days that have no place in the current one
   const extraHistoricalDays = month.slice(activeMonthDaysCount);
 
-  // procenta na distribuci
+  // Percentages on distribution
   const percentageToRedistribute = extraHistoricalDays.reduce(
     (sum, day) => sum + day.Dph_val,
     0
@@ -315,7 +314,7 @@ function redistributeExtraDays(
   const percentagePerRemainingDay =
     percentageToRedistribute / remainingActiveDays;
 
-  // Dny, které uz probehly - nesahat!!
+  // Days that have already passed
   const pastDays = month.slice(0, activeDaysCount);
 
   const futureDays = month
