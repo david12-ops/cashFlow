@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import dphPrediction from "@/utils/dphPrediction";
 import wageCostsPrediction from "@/utils/wageCostsPrediction";
 import providedLoansPrediction from "@/utils/providedLoansPrediction";
+import issuedInvoicesPrediction from "@/utils/issuedInvoicesPrediction";
 
 export default async function Page() {
   const cookieStore = cookies();
@@ -13,7 +14,8 @@ export default async function Page() {
 
   const monthlyDPHPredNumber = dphPrediction();
   const wagePrediction = wageCostsPrediction();
-  const loanPrediction = providedLoansPrediction();
+  const loanDelayPrediction = providedLoansPrediction();
+  const invoicePaymentDelayPrediction = issuedInvoicesPrediction();
 
   return (
     <div
@@ -72,8 +74,22 @@ export default async function Page() {
       </div>
 
       <div>
-        <h1 style={{ textAlign: "center" }}>Loan prediction</h1>
-        {loanPrediction.map((item, index) => (
+        <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
+        {loanDelayPrediction.map((item, index) => (
+          <div key={index} style={{ marginBottom: "20px" }}>
+            <p>Date: {item.date}</p>
+            <p>Lower Bound: {item.lowerBound}</p>
+            <p>Prediction: {item.prediction}</p>
+            <p>Upper Bound: {item.upperBound}</p>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h1 style={{ textAlign: "center" }}>
+          Invoices payment delay prediction
+        </h1>
+        {invoicePaymentDelayPrediction.map((item, index) => (
           <div key={index} style={{ marginBottom: "20px" }}>
             <p>Date: {item.date}</p>
             <p>Lower Bound: {item.lowerBound}</p>
