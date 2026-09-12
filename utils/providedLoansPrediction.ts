@@ -33,25 +33,32 @@ function prepareLoanData(): LoansData {
           continue;
         }
 
+        // Season coefficient
+        const seasonality = Math.sin((2 * Math.PI * month) / 12);
+
+        const amountCzeWithSeasonality = loan.Amount * (1 + 0.3 * seasonality);
+
         const paymentType = Math.random();
 
         let amountPaid: number;
         let delay: number | null;
 
         if (paymentType < 0.7) {
-          // 70 % zaplaceno vcas
-          amountPaid = loan.Amount;
+          // 70% paid on time
+          amountPaid = amountCzeWithSeasonality;
           delay = 0;
         } else if (paymentType < 0.9) {
-          // 20 % zaplaceno se zpozdenim
-          amountPaid = loan.Amount;
+          // 20% paid late
+          amountPaid = amountCzeWithSeasonality;
           delay = Math.floor(Math.random() * 30) + 1;
         } else if (paymentType < 0.95) {
-          // 5 % zaplaceno častečně
-          amountPaid = Math.floor(loan.Amount * (0.3 + Math.random() * 0.5));
+          // 5% paid partially
+          amountPaid = Math.floor(
+            amountCzeWithSeasonality * (0.3 + Math.random() * 0.5)
+          );
           delay = Math.floor(Math.random() * 30) + 1;
         } else {
-          // 5 % zatim nezaplaceno
+          // 5% not paid yet
           amountPaid = 0;
           delay = null;
         }
@@ -72,7 +79,7 @@ function prepareLoanData(): LoansData {
   return loanData;
 }
 
-function aggregateInvoicesByMonth(data: LoansData): number[] {
+function aggregateLoansDelayByMonth(data: LoansData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
   data.forEach(item => {
@@ -94,12 +101,12 @@ function aggregateInvoicesByMonth(data: LoansData): number[] {
   return Array.from(monthlyValues.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, values]) => {
-      return values.reduce((acc, val) => acc + val, 0);
+      return values.reduce((acc, val) => acc + val, 0) / values.length;
     });
 }
 
 function computeAIC(rezidua: number[], paramsCount: number): number {
-  const k = paramsCount; // tady jeste uvidime
+  const k = paramsCount; // We'll see here after optimization, how many parameters we have in the model
 
   const sse = rezidua.map(numb => numb * numb);
   const sseSum = sse.reduce((acc, val) => acc + val, 0);
@@ -108,7 +115,7 @@ function computeAIC(rezidua: number[], paramsCount: number): number {
 }
 
 // SES
-// picked by MAE
+// Picked by MAE
 function pickBestAlphaByMAE(aggregatedData: number[]): number {
   let bestAlpha = 0;
   let bestErrorValue = Number.MAX_VALUE;
@@ -216,7 +223,7 @@ function sesPrediction(
   return predictionData;
 }
 
-//Holtovo exponenciální vyhlazování
+// Holt's exponential smoothing
 function pickBestHoltParameters(aggregatedData: number[]): {
   bestAlpha: number;
   bestBeta: number;
@@ -295,7 +302,7 @@ function holtExponentialSmoothing(
   return values[values.length - 1];
 }
 
-//Holt-Winters
+// Holt-Winters
 function pickBestHoltWintersParameters(aggregatedData: number[]): {
   bestAlpha: number;
   bestBeta: number;
@@ -494,7 +501,7 @@ function holtPrediction(
       });
     }
   } else {
-    console.error("Uknown holt algorithm type -" + `${type}`);
+    console.error("Unknown holt algorithm type -" + `${type}`);
     predictionData = [];
   }
 
@@ -504,7 +511,7 @@ function holtPrediction(
 function pickbestPredictionModel(
   values: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[]
 ): "holt" | "holt-winter" | "ses" {
-  //jde i pomoci reduce
+  // reduce can be used there too
   // const indexOfBestModel = values.reduce(
   //   (best, current, currentIndex) =>
   //     current.aicValue < values[best].aicValue ? currentIndex : best,
@@ -534,7 +541,7 @@ function pickbestPredictionModel(
   return bestModel;
 }
 
-// Intervaly spolehlivosti
+// Confidence intervals
 function computeConfidenceIntervals(
   rezidua: number[],
   prediction: { date: string; value: number }[]
@@ -543,7 +550,7 @@ function computeConfidenceIntervals(
 
   const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
   const meanOfRezidua = sumOfRezidua / rezidua.length;
-  const z = 1.96; // pro 95% interval spolehlivosti
+  const z = 1.96; // For a 95% confidence interval
 
   let sumSquaredDeviations = 0;
   for (let i = 0; i < rezidua.length; i++) {
@@ -552,7 +559,7 @@ function computeConfidenceIntervals(
 
   for (let i = 0; i < prediction.length; i++) {
     const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);
-    const h = i + 1; // kolikaty mesic
+    const h = i + 1; // Order of the month
 
     const lowerBound = prediction[i].value - z * sigma * Math.sqrt(h);
     const upperBound = prediction[i].value + z * sigma * Math.sqrt(h);
@@ -571,7 +578,7 @@ function computeConfidenceIntervals(
 export default function providedLoansPrediction() {
   const data: LoansData = prepareLoanData();
 
-  const aggregatedData = aggregateInvoicesByMonth(data);
+  const aggregatedData = aggregateLoansDelayByMonth(data);
 
   const trainingData = aggregatedData.slice(0, 48);
   const testData = aggregatedData.slice(48, 60);
