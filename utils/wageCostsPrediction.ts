@@ -258,8 +258,8 @@ function convertBaseAmountToOneCurrency(
 }
 
 function prepareWageCostData(): WagesData {
-  // zatim normalizuj do czk, ale data klidne generuj v ostatních měnach
-  // pomoci convertBaseAmountToOneCurrency lze delat predikce v urcite měně nehledě na to, že v datech je vice různých měn
+  // For now, normalize to CZK, but feel free to generate data in other currencies
+  // You can use convertBaseAmountToOneCurrency to make predictions in a certain currency regardless of the fact that there are multiple different currencies in the data
   const wageData: WagesData = [];
 
   const startYear = 2021;
@@ -557,7 +557,6 @@ function findElbow(data: number[]): number {
     }
   }
 
-  // wcssValues začíná u k = 2
   return elbowIndex + 2;
 }
 
@@ -583,7 +582,7 @@ function findOptimalK(data: WagesData): number {
 
   const maxK = 10;
 
-  //for While
+  // For while cycle
   let oldCentroids: number[] = [];
   let newCentroids: number[] = [];
 
@@ -648,17 +647,20 @@ function selectCentroids(k: number, data: WagesData): number[] {
     throw new Error("Počet centroidů nemůže být větší než počet dat.");
   }
 
-  // tady bude cyklus k-krát
+  // Here will be a loop k times
   for (let i = 0; i < k; i++) {
-    // uvnitř:
-    // 1. náhodný index
+    // Inside:
+    // 1. random index
     let randomIndex = Math.floor(Math.random() * data.length);
-    // 2. kontrola duplicity
+
+    // 2. check for duplicates
     while (selectedIndexes.includes(randomIndex))
       randomIndex = Math.floor(Math.random() * data.length);
-    // 3. přidání indexu
+
+    // 3. adding an index
     selectedIndexes.push(randomIndex);
-    // 4. přidání data[index] do centroids
+
+    // 4. adding data[index] to centroids
     centroids.push(data[randomIndex].BaseAmount);
   }
 
@@ -716,9 +718,9 @@ function predictClustersWithDrift(clusteredData: Cluster): number[] {
 export default function wageCostsPrediction(): PredictionWageResult {
   const data: WagesData = prepareWageCostData();
 
-  // centroidy maji jen baseAmount
+  // Centroids have only baseAmount
 
-  //for While
+  // For while cycle
   let oldCentroids: number[] = [];
   let newCentroids: number[] = [];
   let clusteredData: Cluster = [];
