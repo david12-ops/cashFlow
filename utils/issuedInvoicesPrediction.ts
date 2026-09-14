@@ -69,12 +69,13 @@ function prepareInvoiceData(): InvoicesData {
   return invoiceData;
 }
 
+// There can be misunderstanding. (CHECK)
 function excludeOutliers(data: InvoicesData): InvoicesData {
-  let sorted = [...data].sort(
+  const sorted = [...data].sort(
     (a, b) => a.DueDate.getTime() - b.DueDate.getTime()
   );
 
-  let firtsNotPaidInvoice = sorted.find(
+  const firtsNotPaidInvoice = sorted.find(
     item => item.AmountCze !== item.AmountPaidCze
   );
 
@@ -82,34 +83,29 @@ function excludeOutliers(data: InvoicesData): InvoicesData {
     return data;
   }
 
-  const excludeInvoices: InvoicesData = [];
-  while (firtsNotPaidInvoice) {
-    const firstNotPaidInvoiceIndex = sorted.indexOf(firtsNotPaidInvoice);
+  // First not paid invoice index
+  const firstNotPaidInvoiceIndex = sorted.indexOf(firtsNotPaidInvoice);
 
-    let countOfPaidInvoices = 0;
+  let countOfPaidInvoices = 0;
 
-    for (let i = firstNotPaidInvoiceIndex + 1; i < sorted.length; i++) {
-      const isPaid = sorted[i].AmountCze === sorted[i].AmountPaidCze;
+  for (let i = firstNotPaidInvoiceIndex + 1; i < sorted.length; i++) {
+    const isPaid = sorted[i].AmountCze === sorted[i].AmountPaidCze;
 
-      if (isPaid) {
-        countOfPaidInvoices = countOfPaidInvoices + 1;
-      }
-
-      if (countOfPaidInvoices > 10) {
-        excludeInvoices.push(firtsNotPaidInvoice);
-
-        break;
-      }
+    if (isPaid) {
+      countOfPaidInvoices = countOfPaidInvoices + 1;
+    } else {
+      break;
     }
-
-    sorted = sorted.filter(item => item !== firtsNotPaidInvoice);
-
-    firtsNotPaidInvoice = sorted.find(
-      item => item.AmountCze !== item.AmountPaidCze
-    );
   }
 
-  return data.filter(item => !excludeInvoices.includes(item));
+  if (countOfPaidInvoices > 10) {
+    console.warn(
+      "Warning: There are more than 10 paid invoices after the first not paid invoice."
+    );
+    return [];
+  }
+
+  return sorted.slice(0, firstNotPaidInvoiceIndex);
 }
 
 function aggregateInvoicesPaymentDelayByMonth(data: InvoicesData): number[] {
