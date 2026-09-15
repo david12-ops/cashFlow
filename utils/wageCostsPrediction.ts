@@ -718,6 +718,9 @@ function predictClustersWithDrift(clusteredData: Cluster): number[] {
 export default function wageCostsPrediction(): PredictionWageResult {
   const data: WagesData = prepareWageCostData();
 
+  const trainingData = data.slice(0, 48);
+  const testData = data.slice(48, 60);
+
   // Centroids have only baseAmount
 
   // For while cycle
@@ -726,16 +729,16 @@ export default function wageCostsPrediction(): PredictionWageResult {
   let clusteredData: Cluster = [];
   let continueAlg = true;
 
-  const optimalK = findOptimalK(data);
+  const optimalK = findOptimalK(trainingData);
 
-  let selectedCentroids = selectCentroids(optimalK, data);
+  let selectedCentroids = selectCentroids(optimalK, trainingData);
 
   oldCentroids = selectedCentroids;
 
   while (continueAlg) {
     const values: AmountsPairedToCentroid = [];
 
-    data.forEach(itm => {
+    trainingData.forEach(itm => {
       const { centroidIndex, distance } = findNearestCentrioid(
         selectedCentroids,
         itm.BaseAmount
@@ -764,6 +767,8 @@ export default function wageCostsPrediction(): PredictionWageResult {
   }
 
   const predictedCentroids = predictClustersWithDrift(clusteredData);
+
+  console.log("test data: ", testData);
 
   return { Centroids: predictedCentroids, Cluster: clusteredData };
 }

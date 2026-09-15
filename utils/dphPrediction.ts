@@ -454,6 +454,8 @@ function monthlyDPHPrediction(): number {
     ...testingData.data,
   };
 
+  data = Object.fromEntries(Object.entries(data).slice(0, 124));
+
   const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
     aggregateMonthlyDPHvaluesbyDay(data);
 
