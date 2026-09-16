@@ -283,9 +283,8 @@ function prepareWageCostData(): WagesData {
   };
 
   /*
-   * Přibližný počet zaměstnanců v jednotlivých divizích.
-   * Díky tomu nebude každý měsíc generován úplně stejný počet
-   * záznamů.
+   * Approximate number of employees in each division.
+   * This way, the exact same number of records won't be generated every month.
    */
   const employeesPerDivision = {
     1: 30,
@@ -299,7 +298,7 @@ function prepareWageCostData(): WagesData {
 
     for (let month = 0; month < 12; month++) {
       /*
-       * Mírný růst mezd v čase.
+       * Mild wage growth over time.
        *
        * 2021 → 1.00
        * 2022 → 1.05
@@ -311,18 +310,18 @@ function prepareWageCostData(): WagesData {
       const pickedCurrencyIndex = Math.floor(Math.random() * currencies.length);
 
       /*
-       * 15. den → mzdy
+       * Day 15 → wages
        */
       const salaryDay = new Date(year, month, 15);
 
       /*
-       * 20. den → odvody
+       * Day 20 → deductions
        */
       const deductionDay = new Date(year, month, 20);
 
       /*
        * -------------------------
-       * MZDY – účet 331xxx
+       * WAGES – account 331xxx
        * -------------------------
        */
       for (const division of divisions) {
@@ -331,12 +330,12 @@ function prepareWageCostData(): WagesData {
 
         for (let employee = 0; employee < employeeCount; employee++) {
           /*
-           * Základní mzda zaměstnance.
+           * Employee's base salary.
            */
           const baseSalary = random(35_000, 70_000);
 
           /*
-           * Náhodná odchylka ±10 %.
+           * Random deviation ±10%.
            */
           const variation = random(0.9, 1.1);
 
@@ -351,7 +350,7 @@ function prepareWageCostData(): WagesData {
             salaryGrowth;
 
           /*
-           * V prosinci a červnu občas přidáme bonus.
+           * In December and June we occasionally add a bonus.
            */
           if ((month === 5 || month === 11) && Math.random() < 0.35)
             salary += convertValueByCurrency(
@@ -364,9 +363,9 @@ function prepareWageCostData(): WagesData {
           salary = round(salary);
 
           /*
-           * Analytický účet 331xxx.
+           * Analytical account 331xxx.
            *
-           * Poslední čísla simulují různé analytické účty.
+           * The last numbers simulate different analytical accounts.
            */
           const account = `331${String(division).padStart(3, "0")}`;
 
@@ -382,7 +381,7 @@ function prepareWageCostData(): WagesData {
 
         /*
          * -------------------------
-         * SOCIÁLNÍ – 336xxx
+         * SOCIAL – 336xxx
          * -------------------------
          */
         const totalSalary = wageData
@@ -408,7 +407,7 @@ function prepareWageCostData(): WagesData {
 
         /*
          * -------------------------
-         * ZDRAVOTNÍ – 336xxx
+         * HEALTH – 336xxx
          * -------------------------
          */
         const health = round(totalSalary * random(0.09, 0.1));
@@ -424,7 +423,7 @@ function prepareWageCostData(): WagesData {
 
         /*
          * -------------------------
-         * DAŇ – 342xxx
+         * TAX – 342xxx
          * -------------------------
          */
         const tax = round(totalSalary * random(0.1, 0.15));
@@ -441,13 +440,12 @@ function prepareWageCostData(): WagesData {
 
       /*
        * -------------------------
-       * OBČASNÉ MIMOŘÁDNÉ ODMĚNY
+       * OCCASIONAL BONUSES
        * -------------------------
        *
-       * Přidáme několik dalších záznamů,
-       * aby dataset nebyl příliš pravidelný.
+       * We'll add a few more entries
+       * so the dataset isn't too regular.
        */
-
       if (Math.random() < 0.25) {
         const bonusCount = Math.floor(random(3, 10));
 
@@ -715,10 +713,41 @@ function predictClustersWithDrift(clusteredData: Cluster): number[] {
   });
 }
 
+function filterDataByPercentil(data: WagesData): WagesData {
+  const amounts = data.map(item => item.BaseAmount);
+
+  const sortedAmounts = [...amounts].sort((a, b) => a - b);
+
+  const percentilIndex = (sortedAmounts.length - 1) * 0.05 + 1;
+
+  const getNeighboursNumbers = (
+    amounts: number[]
+  ): { firts: number; second: number } => {
+    let neighboursNumbers = { firts: 0, second: 0 };
+
+    neighboursNumbers = {
+      firts: amounts[Math.floor(percentilIndex) - 1],
+      second: amounts[Math.ceil(percentilIndex) - 1],
+    };
+
+    return neighboursNumbers;
+  };
+  const neighboursNumbers = getNeighboursNumbers(sortedAmounts);
+
+  const percentil =
+    percentilIndex - Math.floor(percentilIndex) === 0
+      ? sortedAmounts[percentilIndex - 1]
+      : neighboursNumbers.firts +
+        (percentilIndex - Math.floor(percentilIndex)) *
+          (neighboursNumbers.second - neighboursNumbers.firts);
+
+  return data.filter(item => item.BaseAmount > percentil);
+}
+
 export default function wageCostsPrediction(): PredictionWageResult {
   const data: WagesData = prepareWageCostData();
 
-  const trainingData = data.slice(0, 48);
+  const trainingData = filterDataByPercentil(data.slice(0, 48));
   const testData = data.slice(48, 60);
 
   // Centroids have only baseAmount
@@ -792,10 +821,10 @@ export default function wageCostsPrediction(): PredictionWageResult {
 /*
  Další nevýhodou je u metody k-meansto, že je velmi citlivá na odlehlá pozorování.
  Tuto nevýhodu se budeme snažit minimalizovat tím, že z odhadu vynecháme velmi nízké
- mzdové výdaje, které budou vůči zbylým výdajům zanedbatelné. - neaplikovano
+ mzdové výdaje, které budou vůči zbylým výdajům zanedbatelné. - je (CHECK)
 */
 
-// jako hraniční hodnota je vedená 100 000 Kč, mi si ji určíme dle naší simulace/analýzy - neaplikovano
+// jako hraniční hodnota je vedená 100 000 Kč, mi si ji určíme dle naší simulace/analýzy - je (CHECK)
 
 /*
  Následně potřebujeme každému shluku přiřadit částku. Abychom se vyvarovali vý
