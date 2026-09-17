@@ -3,37 +3,37 @@ import { z } from "zod";
 export const CurrencySchema = z.enum(["CZK", "EUR", "USD", "GBP", "PLN"]);
 
 export const WageItemSchema = z.object({
-  DimDateId: z.number(),
-  TransactionDate: z.date(),
-  BaseAmount: z.number(),
-  Account: z.string(),
-  Division: z.number(),
-  Currency: CurrencySchema,
+  dimDateId: z.number(),
+  transactionDate: z.date(),
+  baseAmount: z.number(),
+  account: z.string(),
+  division: z.number(),
+  currency: CurrencySchema,
 });
 
 export const WagesDataSchema = z.array(WageItemSchema);
 
 export const AmountsPairedToCentroidSchema = z.array(
   z.object({
-    WageItem: WageItemSchema,
-    CentroidIndex: z.number(),
-    Distance: z.number(),
+    wageItem: WageItemSchema,
+    centroidIndex: z.number(),
+    distance: z.number(),
   })
 );
 
 export const ClusterSchema = z.record(z.number(), z.array(WageItemSchema));
 
 export const PredictionWageResultSchema = z.object({
-  Centroids: z.array(z.number()),
-  Cluster: ClusterSchema,
+  predictedValue: z.number(),
+  predictionValues: WagesDataSchema,
 });
 
 export const CurrencyConvertMapSchema = z.record(
   CurrencySchema,
   z.array(
     z.object({
-      Currency: CurrencySchema,
-      Value: z.number(),
+      currency: CurrencySchema,
+      value: z.number(),
     })
   )
 );

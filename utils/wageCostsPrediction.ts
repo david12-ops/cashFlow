@@ -12,191 +12,191 @@ function createCurrencyRatesMap(year: number): CurrencyConvertMap {
   const exchangeRates: EchangeRates = {
     2021: {
       CZK: [
-        { Currency: "CZK", Value: 1 },
-        { Currency: "EUR", Value: 0.03899 },
-        { Currency: "USD", Value: 0.04613 },
-        { Currency: "GBP", Value: 0.03352 },
-        { Currency: "PLN", Value: 0.1778 },
+        { currency: "CZK", value: 1 },
+        { currency: "EUR", value: 0.03899 },
+        { currency: "USD", value: 0.04613 },
+        { currency: "GBP", value: 0.03352 },
+        { currency: "PLN", value: 0.1778 },
       ],
       EUR: [
-        { Currency: "CZK", Value: 25.65 },
-        { Currency: "EUR", Value: 1 },
-        { Currency: "USD", Value: 1.183 },
-        { Currency: "GBP", Value: 0.86 },
-        { Currency: "PLN", Value: 4.56 },
+        { currency: "CZK", value: 25.65 },
+        { currency: "EUR", value: 1 },
+        { currency: "USD", value: 1.183 },
+        { currency: "GBP", value: 0.86 },
+        { currency: "PLN", value: 4.56 },
       ],
       USD: [
-        { Currency: "CZK", Value: 21.68 },
-        { Currency: "EUR", Value: 0.845 },
-        { Currency: "USD", Value: 1 },
-        { Currency: "GBP", Value: 0.727 },
-        { Currency: "PLN", Value: 3.93 },
+        { currency: "CZK", value: 21.68 },
+        { currency: "EUR", value: 0.845 },
+        { currency: "USD", value: 1 },
+        { currency: "GBP", value: 0.727 },
+        { currency: "PLN", value: 3.93 },
       ],
       GBP: [
-        { Currency: "CZK", Value: 29.83 },
-        { Currency: "EUR", Value: 1.163 },
-        { Currency: "USD", Value: 1.376 },
-        { Currency: "GBP", Value: 1 },
-        { Currency: "PLN", Value: 5.32 },
+        { currency: "CZK", value: 29.83 },
+        { currency: "EUR", value: 1.163 },
+        { currency: "USD", value: 1.376 },
+        { currency: "GBP", value: 1 },
+        { currency: "PLN", value: 5.32 },
       ],
       PLN: [
-        { Currency: "CZK", Value: 5.625 },
-        { Currency: "EUR", Value: 0.219 },
-        { Currency: "USD", Value: 0.254 },
-        { Currency: "GBP", Value: 0.188 },
-        { Currency: "PLN", Value: 1 },
+        { currency: "CZK", value: 5.625 },
+        { currency: "EUR", value: 0.219 },
+        { currency: "USD", value: 0.254 },
+        { currency: "GBP", value: 0.188 },
+        { currency: "PLN", value: 1 },
       ],
     },
 
     2022: {
       CZK: [
-        { Currency: "CZK", Value: 1 },
-        { Currency: "EUR", Value: 0.04072 },
-        { Currency: "USD", Value: 0.04281 },
-        { Currency: "GBP", Value: 0.03502 },
-        { Currency: "PLN", Value: 0.1827 },
+        { currency: "CZK", value: 1 },
+        { currency: "EUR", value: 0.04072 },
+        { currency: "USD", value: 0.04281 },
+        { currency: "GBP", value: 0.03502 },
+        { currency: "PLN", value: 0.1827 },
       ],
       EUR: [
-        { Currency: "CZK", Value: 24.56 },
-        { Currency: "EUR", Value: 1 },
-        { Currency: "USD", Value: 1.051 },
-        { Currency: "GBP", Value: 0.86 },
-        { Currency: "PLN", Value: 4.49 },
+        { currency: "CZK", value: 24.56 },
+        { currency: "EUR", value: 1 },
+        { currency: "USD", value: 1.051 },
+        { currency: "GBP", value: 0.86 },
+        { currency: "PLN", value: 4.49 },
       ],
       USD: [
-        { Currency: "CZK", Value: 23.36 },
-        { Currency: "EUR", Value: 0.951 },
-        { Currency: "USD", Value: 1 },
-        { Currency: "GBP", Value: 0.818 },
-        { Currency: "PLN", Value: 4.27 },
+        { currency: "CZK", value: 23.36 },
+        { currency: "EUR", value: 0.951 },
+        { currency: "USD", value: 1 },
+        { currency: "GBP", value: 0.818 },
+        { currency: "PLN", value: 4.27 },
       ],
       GBP: [
-        { Currency: "CZK", Value: 28.56 },
-        { Currency: "EUR", Value: 1.163 },
-        { Currency: "USD", Value: 1.223 },
-        { Currency: "GBP", Value: 1 },
-        { Currency: "PLN", Value: 5.18 },
+        { currency: "CZK", value: 28.56 },
+        { currency: "EUR", value: 1.163 },
+        { currency: "USD", value: 1.223 },
+        { currency: "GBP", value: 1 },
+        { currency: "PLN", value: 5.18 },
       ],
       PLN: [
-        { Currency: "CZK", Value: 5.474 },
-        { Currency: "EUR", Value: 0.223 },
-        { Currency: "USD", Value: 0.234 },
-        { Currency: "GBP", Value: 0.193 },
-        { Currency: "PLN", Value: 1 },
+        { currency: "CZK", value: 5.474 },
+        { currency: "EUR", value: 0.223 },
+        { currency: "USD", value: 0.234 },
+        { currency: "GBP", value: 0.193 },
+        { currency: "PLN", value: 1 },
       ],
     },
 
     2023: {
       CZK: [
-        { Currency: "CZK", Value: 1 },
-        { Currency: "EUR", Value: 0.04166 },
-        { Currency: "USD", Value: 0.04505 },
-        { Currency: "GBP", Value: 0.03592 },
-        { Currency: "PLN", Value: 0.1864 },
+        { currency: "CZK", value: 1 },
+        { currency: "EUR", value: 0.04166 },
+        { currency: "USD", value: 0.04505 },
+        { currency: "GBP", value: 0.03592 },
+        { currency: "PLN", value: 0.1864 },
       ],
       EUR: [
-        { Currency: "CZK", Value: 24.0 },
-        { Currency: "EUR", Value: 1 },
-        { Currency: "USD", Value: 1.081 },
-        { Currency: "GBP", Value: 0.862 },
-        { Currency: "PLN", Value: 4.47 },
+        { currency: "CZK", value: 24.0 },
+        { currency: "EUR", value: 1 },
+        { currency: "USD", value: 1.081 },
+        { currency: "GBP", value: 0.862 },
+        { currency: "PLN", value: 4.47 },
       ],
       USD: [
-        { Currency: "CZK", Value: 22.2 },
-        { Currency: "EUR", Value: 0.925 },
-        { Currency: "USD", Value: 1 },
-        { Currency: "GBP", Value: 0.798 },
-        { Currency: "PLN", Value: 4.13 },
+        { currency: "CZK", value: 22.2 },
+        { currency: "EUR", value: 0.925 },
+        { currency: "USD", value: 1 },
+        { currency: "GBP", value: 0.798 },
+        { currency: "PLN", value: 4.13 },
       ],
       GBP: [
-        { Currency: "CZK", Value: 27.84 },
-        { Currency: "EUR", Value: 1.16 },
-        { Currency: "USD", Value: 1.253 },
-        { Currency: "GBP", Value: 1 },
-        { Currency: "PLN", Value: 5.16 },
+        { currency: "CZK", value: 27.84 },
+        { currency: "EUR", value: 1.16 },
+        { currency: "USD", value: 1.253 },
+        { currency: "GBP", value: 1 },
+        { currency: "PLN", value: 5.16 },
       ],
       PLN: [
-        { Currency: "CZK", Value: 5.365 },
-        { Currency: "EUR", Value: 0.224 },
-        { Currency: "USD", Value: 0.242 },
-        { Currency: "GBP", Value: 0.194 },
-        { Currency: "PLN", Value: 1 },
+        { currency: "CZK", value: 5.365 },
+        { currency: "EUR", value: 0.224 },
+        { currency: "USD", value: 0.242 },
+        { currency: "GBP", value: 0.194 },
+        { currency: "PLN", value: 1 },
       ],
     },
 
     2024: {
       CZK: [
-        { Currency: "CZK", Value: 1 },
-        { Currency: "EUR", Value: 0.03981 },
-        { Currency: "USD", Value: 0.04307 },
-        { Currency: "GBP", Value: 0.03388 },
-        { Currency: "PLN", Value: 0.1715 },
+        { currency: "CZK", value: 1 },
+        { currency: "EUR", value: 0.03981 },
+        { currency: "USD", value: 0.04307 },
+        { currency: "GBP", value: 0.03388 },
+        { currency: "PLN", value: 0.1715 },
       ],
       EUR: [
-        { Currency: "CZK", Value: 25.12 },
-        { Currency: "EUR", Value: 1 },
-        { Currency: "USD", Value: 1.082 },
-        { Currency: "GBP", Value: 0.851 },
-        { Currency: "PLN", Value: 4.31 },
+        { currency: "CZK", value: 25.12 },
+        { currency: "EUR", value: 1 },
+        { currency: "USD", value: 1.082 },
+        { currency: "GBP", value: 0.851 },
+        { currency: "PLN", value: 4.31 },
       ],
       USD: [
-        { Currency: "CZK", Value: 23.22 },
-        { Currency: "EUR", Value: 0.924 },
-        { Currency: "USD", Value: 1 },
-        { Currency: "GBP", Value: 0.786 },
-        { Currency: "PLN", Value: 3.98 },
+        { currency: "CZK", value: 23.22 },
+        { currency: "EUR", value: 0.924 },
+        { currency: "USD", value: 1 },
+        { currency: "GBP", value: 0.786 },
+        { currency: "PLN", value: 3.98 },
       ],
       GBP: [
-        { Currency: "CZK", Value: 29.52 },
-        { Currency: "EUR", Value: 1.175 },
-        { Currency: "USD", Value: 1.272 },
-        { Currency: "GBP", Value: 1 },
-        { Currency: "PLN", Value: 5.03 },
+        { currency: "CZK", value: 29.52 },
+        { currency: "EUR", value: 1.175 },
+        { currency: "USD", value: 1.272 },
+        { currency: "GBP", value: 1 },
+        { currency: "PLN", value: 5.03 },
       ],
       PLN: [
-        { Currency: "CZK", Value: 5.831 },
-        { Currency: "EUR", Value: 0.232 },
-        { Currency: "USD", Value: 0.251 },
-        { Currency: "GBP", Value: 0.199 },
-        { Currency: "PLN", Value: 1 },
+        { currency: "CZK", value: 5.831 },
+        { currency: "EUR", value: 0.232 },
+        { currency: "USD", value: 0.251 },
+        { currency: "GBP", value: 0.199 },
+        { currency: "PLN", value: 1 },
       ],
     },
 
     2025: {
       CZK: [
-        { Currency: "CZK", Value: 1 },
-        { Currency: "EUR", Value: 0.0405 },
-        { Currency: "USD", Value: 0.04194 },
-        { Currency: "GBP", Value: 0.035 },
-        { Currency: "PLN", Value: 0.1733 },
+        { currency: "CZK", value: 1 },
+        { currency: "EUR", value: 0.0405 },
+        { currency: "USD", value: 0.04194 },
+        { currency: "GBP", value: 0.035 },
+        { currency: "PLN", value: 0.1733 },
       ],
       EUR: [
-        { Currency: "CZK", Value: 24.69 },
-        { Currency: "EUR", Value: 1 },
-        { Currency: "USD", Value: 1.035 },
-        { Currency: "GBP", Value: 0.864 },
-        { Currency: "PLN", Value: 4.28 },
+        { currency: "CZK", value: 24.69 },
+        { currency: "EUR", value: 1 },
+        { currency: "USD", value: 1.035 },
+        { currency: "GBP", value: 0.864 },
+        { currency: "PLN", value: 4.28 },
       ],
       USD: [
-        { Currency: "CZK", Value: 23.84 },
-        { Currency: "EUR", Value: 0.966 },
-        { Currency: "USD", Value: 1 },
-        { Currency: "GBP", Value: 0.832 },
-        { Currency: "PLN", Value: 4.11 },
+        { currency: "CZK", value: 23.84 },
+        { currency: "EUR", value: 0.966 },
+        { currency: "USD", value: 1 },
+        { currency: "GBP", value: 0.832 },
+        { currency: "PLN", value: 4.11 },
       ],
       GBP: [
-        { Currency: "CZK", Value: 28.57 },
-        { Currency: "EUR", Value: 1.157 },
-        { Currency: "USD", Value: 1.202 },
-        { Currency: "GBP", Value: 1 },
-        { Currency: "PLN", Value: 4.95 },
+        { currency: "CZK", value: 28.57 },
+        { currency: "EUR", value: 1.157 },
+        { currency: "USD", value: 1.202 },
+        { currency: "GBP", value: 1 },
+        { currency: "PLN", value: 4.95 },
       ],
       PLN: [
-        { Currency: "CZK", Value: 5.77 },
-        { Currency: "EUR", Value: 0.234 },
-        { Currency: "USD", Value: 0.243 },
-        { Currency: "GBP", Value: 0.202 },
-        { Currency: "PLN", Value: 1 },
+        { currency: "CZK", value: 5.77 },
+        { currency: "EUR", value: 0.234 },
+        { currency: "USD", value: 0.243 },
+        { currency: "GBP", value: 0.202 },
+        { currency: "PLN", value: 1 },
       ],
     },
   };
@@ -224,11 +224,11 @@ function convertValueByCurrency(
   ratesMap: CurrencyConvertMap
 ): number {
   const exchangeItem = ratesMap[fromCurrency].find(
-    cur => cur.Currency === toCurrency
+    cur => cur.currency === toCurrency
   );
 
   if (exchangeItem) {
-    return value * exchangeItem.Value;
+    return value * exchangeItem.value;
   } else
     throw new Error(
       `Exchange rate from ${fromCurrency} to ${toCurrency} not found.`
@@ -241,18 +241,18 @@ function convertBaseAmountToOneCurrency(
 ): WagesData {
   return data.map(item => {
     const ratesMap: CurrencyConvertMap = createCurrencyRatesMap(
-      item.TransactionDate.getFullYear()
+      item.transactionDate.getFullYear()
     );
 
     return {
       ...item,
       BaseAmount: convertValueByCurrency(
-        item.Currency,
+        item.currency,
         currency,
-        item.BaseAmount,
+        item.baseAmount,
         ratesMap
       ),
-      Currency: currency,
+      currency: currency,
     };
   });
 }
@@ -370,12 +370,12 @@ function prepareWageCostData(): WagesData {
           const account = `331${String(division).padStart(3, "0")}`;
 
           wageData.push({
-            DimDateId: createDimDateId(salaryDay),
-            TransactionDate: new Date(salaryDay),
-            BaseAmount: salary,
-            Account: account,
-            Division: division,
-            Currency: currencies[pickedCurrencyIndex],
+            dimDateId: createDimDateId(salaryDay),
+            transactionDate: new Date(salaryDay),
+            baseAmount: salary,
+            account: account,
+            division: division,
+            currency: currencies[pickedCurrencyIndex],
           });
         }
 
@@ -387,22 +387,22 @@ function prepareWageCostData(): WagesData {
         const totalSalary = wageData
           .filter(
             item =>
-              item.TransactionDate.getFullYear() === year &&
-              item.TransactionDate.getMonth() === month &&
-              item.Division === division &&
-              item.Account.startsWith("331")
+              item.transactionDate.getFullYear() === year &&
+              item.transactionDate.getMonth() === month &&
+              item.division === division &&
+              item.account.startsWith("331")
           )
-          .reduce((sum, item) => sum + item.BaseAmount, 0);
+          .reduce((sum, item) => sum + item.baseAmount, 0);
 
         const social = round(totalSalary * random(0.23, 0.25));
 
         wageData.push({
-          DimDateId: createDimDateId(deductionDay),
-          TransactionDate: new Date(deductionDay),
-          BaseAmount: social,
-          Account: `336${String(division).padStart(3, "0")}`,
-          Division: division,
-          Currency: currencies[pickedCurrencyIndex],
+          dimDateId: createDimDateId(deductionDay),
+          transactionDate: new Date(deductionDay),
+          baseAmount: social,
+          account: `336${String(division).padStart(3, "0")}`,
+          division: division,
+          currency: currencies[pickedCurrencyIndex],
         });
 
         /*
@@ -413,12 +413,12 @@ function prepareWageCostData(): WagesData {
         const health = round(totalSalary * random(0.09, 0.1));
 
         wageData.push({
-          DimDateId: createDimDateId(deductionDay),
-          TransactionDate: new Date(deductionDay),
-          BaseAmount: health,
-          Account: `336${String(division + 100).padStart(3, "0")}`,
-          Division: division,
-          Currency: currencies[pickedCurrencyIndex],
+          dimDateId: createDimDateId(deductionDay),
+          transactionDate: new Date(deductionDay),
+          baseAmount: health,
+          account: `336${String(division + 100).padStart(3, "0")}`,
+          division: division,
+          currency: currencies[pickedCurrencyIndex],
         });
 
         /*
@@ -429,12 +429,12 @@ function prepareWageCostData(): WagesData {
         const tax = round(totalSalary * random(0.1, 0.15));
 
         wageData.push({
-          DimDateId: createDimDateId(deductionDay),
-          TransactionDate: new Date(deductionDay),
-          BaseAmount: tax,
-          Account: `342${String(division).padStart(3, "0")}`,
-          Division: division,
-          Currency: currencies[pickedCurrencyIndex],
+          dimDateId: createDimDateId(deductionDay),
+          transactionDate: new Date(deductionDay),
+          baseAmount: tax,
+          account: `342${String(division).padStart(3, "0")}`,
+          division: division,
+          currency: currencies[pickedCurrencyIndex],
         });
       }
 
@@ -456,17 +456,17 @@ function prepareWageCostData(): WagesData {
           const bonusDay = new Date(year, month, 25);
 
           wageData.push({
-            DimDateId: createDimDateId(bonusDay),
-            TransactionDate: bonusDay,
-            BaseAmount: convertValueByCurrency(
+            dimDateId: createDimDateId(bonusDay),
+            transactionDate: bonusDay,
+            baseAmount: convertValueByCurrency(
               "CZK",
               currencies[pickedCurrencyIndex],
               round(random(5_000, 25_000)),
               ratesMap
             ),
-            Account: `331${String(division).padStart(3, "0")}`,
-            Division: division,
-            Currency: currencies[pickedCurrencyIndex],
+            account: `331${String(division).padStart(3, "0")}`,
+            division: division,
+            currency: currencies[pickedCurrencyIndex],
           });
         }
       }
@@ -483,9 +483,9 @@ function clusterData(data: AmountsPairedToCentroid, k: number): Cluster {
     cluster[i] = [];
 
     const item = data
-      .filter(itm => itm.CentroidIndex === i)
+      .filter(itm => itm.centroidIndex === i)
       .map(itm => {
-        return itm.WageItem;
+        return itm.wageItem;
       });
 
     cluster[i].push(...item);
@@ -506,14 +506,14 @@ function aggregateClusteredDataToNewCentroids(
     const data = cluster[i];
 
     const sumOfBaseAmount = data.reduce(
-      (sum, item) => sum + item.BaseAmount,
+      (sum, item) => sum + item.baseAmount,
       0
     );
 
     let averageAmount = 0;
 
     if (data.length === 0) {
-      averageAmount = oldCentroids[i].WageItem.BaseAmount;
+      averageAmount = oldCentroids[i].wageItem.baseAmount;
     } else {
       averageAmount = sumOfBaseAmount / data.length;
     }
@@ -597,13 +597,13 @@ function findOptimalK(data: WagesData): number {
       data.forEach(itm => {
         const { centroidIndex, distance } = findNearestCentrioid(
           selectedCentroids,
-          itm.BaseAmount
+          itm.baseAmount
         );
 
         values.push({
-          WageItem: itm,
-          CentroidIndex: centroidIndex,
-          Distance: distance,
+          wageItem: itm,
+          centroidIndex: centroidIndex,
+          distance: distance,
         });
       });
 
@@ -626,7 +626,7 @@ function findOptimalK(data: WagesData): number {
     data.forEach(itm => {
       const { distance } = findNearestCentrioid(
         selectedCentroids,
-        itm.BaseAmount
+        itm.baseAmount
       );
 
       wcss += distance ** 2;
@@ -659,7 +659,7 @@ function selectCentroids(k: number, data: WagesData): number[] {
     selectedIndexes.push(randomIndex);
 
     // 4. adding data[index] to centroids
-    centroids.push(data[randomIndex].BaseAmount);
+    centroids.push(data[randomIndex].baseAmount);
   }
 
   return centroids;
@@ -669,21 +669,19 @@ function aggregateClusterByMonth(cluster: WagesData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
   cluster.forEach(item => {
-    const key = `${item.TransactionDate.getFullYear()} - ${item.TransactionDate.getMonth()}`;
+    const key = `${item.transactionDate.getFullYear()} - ${item.transactionDate.getMonth()}`;
 
     if (!monthlyValues.has(key)) {
       monthlyValues.set(key, []);
     }
 
-    monthlyValues.get(key)!.push(item.BaseAmount);
+    monthlyValues.get(key)!.push(item.baseAmount);
   });
 
   return Array.from(monthlyValues.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, values]) => {
-      const sum = values.reduce((acc, val) => acc + val, 0);
-
-      return sum / values.length;
+      return values.reduce((acc, val) => acc + val, 0);
     });
 }
 
@@ -695,7 +693,7 @@ function randomWalkWithDrift(monthlyValues: number[]): number {
   let sumChanges = 0;
 
   for (let i = 1; i < monthlyValues.length; i++) {
-    sumChanges = monthlyValues[i] - monthlyValues[i - 1];
+    sumChanges += monthlyValues[i] - monthlyValues[i - 1];
   }
 
   const drift = sumChanges / (monthlyValues.length - 1);
@@ -705,16 +703,25 @@ function randomWalkWithDrift(monthlyValues: number[]): number {
   return lastValue + drift;
 }
 
-function predictClustersWithDrift(clusteredData: Cluster): number[] {
-  return Object.values(clusteredData).map(cluster => {
+function predictClustersWithDrift(
+  clusteredData: Cluster
+): PredictionWageResult[] {
+  const values: PredictionWageResult[] = [];
+
+  Object.values(clusteredData).forEach(cluster => {
     const monthlyValues = aggregateClusterByMonth(cluster);
 
-    return randomWalkWithDrift(monthlyValues);
+    values.push({
+      predictedValue: randomWalkWithDrift(monthlyValues),
+      predictionValues: cluster,
+    });
   });
+
+  return values;
 }
 
 function filterDataByPercentil(data: WagesData): WagesData {
-  const amounts = data.map(item => item.BaseAmount);
+  const amounts = data.map(item => item.baseAmount);
 
   const sortedAmounts = [...amounts].sort((a, b) => a - b);
 
@@ -741,10 +748,13 @@ function filterDataByPercentil(data: WagesData): WagesData {
         (percentilIndex - Math.floor(percentilIndex)) *
           (neighboursNumbers.second - neighboursNumbers.first);
 
-  return data.filter(item => item.BaseAmount > percentil);
+  return data.filter(item => item.baseAmount > percentil);
 }
 
-export default function wageCostsPrediction(): PredictionWageResult {
+// At the moment when there will be another feature, for example payment delay
+// function standardizeData() {}
+
+export default function wageCostsPrediction(): number {
   const data: WagesData = prepareWageCostData();
 
   const trainingData = filterDataByPercentil(data.slice(0, 48));
@@ -770,13 +780,13 @@ export default function wageCostsPrediction(): PredictionWageResult {
     trainingData.forEach(itm => {
       const { centroidIndex, distance } = findNearestCentrioid(
         selectedCentroids,
-        itm.BaseAmount
+        itm.baseAmount
       );
 
       values.push({
-        WageItem: itm,
-        CentroidIndex: centroidIndex,
-        Distance: distance,
+        wageItem: itm,
+        centroidIndex: centroidIndex,
+        distance: distance,
       });
     });
 
@@ -795,11 +805,17 @@ export default function wageCostsPrediction(): PredictionWageResult {
     oldCentroids = newCentroids;
   }
 
-  const predictedCentroids = predictClustersWithDrift(clusteredData);
+  const predictedClusterAmounts = predictClustersWithDrift(clusteredData);
+  const predictionValue = predictedClusterAmounts.reduce(
+    (prev, curr) => prev + curr.predictedValue,
+    0
+  );
 
   console.log("test data: ", testData);
+  console.log("prediction data " + predictedClusterAmounts);
+  console.log("prediction wage " + predictionValue);
 
-  return { Centroids: predictedCentroids, Cluster: clusteredData };
+  return predictionValue;
 }
 
 /*
