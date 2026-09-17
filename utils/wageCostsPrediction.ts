@@ -722,11 +722,11 @@ function filterDataByPercentil(data: WagesData): WagesData {
 
   const getNeighboursNumbers = (
     amounts: number[]
-  ): { firts: number; second: number } => {
-    let neighboursNumbers = { firts: 0, second: 0 };
+  ): { first: number; second: number } => {
+    let neighboursNumbers = { first: 0, second: 0 };
 
     neighboursNumbers = {
-      firts: amounts[Math.floor(percentilIndex) - 1],
+      first: amounts[Math.floor(percentilIndex) - 1],
       second: amounts[Math.ceil(percentilIndex) - 1],
     };
 
@@ -737,9 +737,9 @@ function filterDataByPercentil(data: WagesData): WagesData {
   const percentil =
     percentilIndex - Math.floor(percentilIndex) === 0
       ? sortedAmounts[percentilIndex - 1]
-      : neighboursNumbers.firts +
+      : neighboursNumbers.first +
         (percentilIndex - Math.floor(percentilIndex)) *
-          (neighboursNumbers.second - neighboursNumbers.firts);
+          (neighboursNumbers.second - neighboursNumbers.first);
 
   return data.filter(item => item.BaseAmount > percentil);
 }
