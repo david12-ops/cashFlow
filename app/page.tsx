@@ -43,60 +43,33 @@ export default async function Page() {
 
         <div>
           <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
-          {wagePrediction.Centroids.map((centroid, index) => (
+          <p>Predicted wage amount : {wagePrediction}</p>
+        </div>
+        <div>
+          <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
+          {loanDelayPrediction.map((item, index) => (
             <div key={index} style={{ marginBottom: "20px" }}>
-              <h3>Centroid: {centroid.toFixed(2)}</h3>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
-                {wagePrediction.Cluster[index].map((dataPoint, dataIndex) => (
-                  <div key={dataIndex}>
-                    <p>DimDateId - {dataPoint.DimDateId}</p>
-                    <p>
-                      TransactionDate -{" "}
-                      {dataPoint.TransactionDate.toDateString()}
-                    </p>
-                    <p>BaseAmount - {dataPoint.BaseAmount}</p>
-                    <p>Account - {dataPoint.Account}</p>
-                    <p>Division - {dataPoint.Division}</p>
-                    <p>Currency - {dataPoint.Currency}</p>
-                  </div>
-                ))}
-              </div>
+              <p>Date: {item.date}</p>
+              <p>Lower Bound: {item.lowerBound}</p>
+              <p>Prediction: {item.prediction}</p>
+              <p>Upper Bound: {item.upperBound}</p>
             </div>
           ))}
         </div>
-      </div>
 
-      <div>
-        <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
-        {loanDelayPrediction.map((item, index) => (
-          <div key={index} style={{ marginBottom: "20px" }}>
-            <p>Date: {item.date}</p>
-            <p>Lower Bound: {item.lowerBound}</p>
-            <p>Prediction: {item.prediction}</p>
-            <p>Upper Bound: {item.upperBound}</p>
-          </div>
-        ))}
-      </div>
-
-      <div>
-        <h1 style={{ textAlign: "center" }}>
-          Invoices payment delay prediction
-        </h1>
-        {invoicePaymentDelayPrediction.map((item, index) => (
-          <div key={index} style={{ marginBottom: "20px" }}>
-            <p>Date: {item.date}</p>
-            <p>Lower Bound: {item.lowerBound}</p>
-            <p>Prediction: {item.prediction}</p>
-            <p>Upper Bound: {item.upperBound}</p>
-          </div>
-        ))}
+        <div>
+          <h1 style={{ textAlign: "center" }}>
+            Invoices payment delay prediction
+          </h1>
+          {invoicePaymentDelayPrediction.map((item, index) => (
+            <div key={index} style={{ marginBottom: "20px" }}>
+              <p>Date: {item.date}</p>
+              <p>Lower Bound: {item.lowerBound}</p>
+              <p>Prediction: {item.prediction}</p>
+              <p>Upper Bound: {item.upperBound}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
