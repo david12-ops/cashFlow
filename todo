@@ -1,0 +1,80 @@
+// dph
+// nekdy muze stat davat a nekdy brat ?
+  // měsičními je na konzultaci
+  // čtvrtletními plátci DPH není, lze použít měsíční predikci (ta není 100%) se sečtením tří měsíců
+
+  /*
+    Pokud chce firma řešit predikci cash flow pomocí modelu, má s velmi velkou prav
+    děpodobností vyšší obrat než jeden milion korun. Proto DPH zahrneme do modelu jako
+    jednu z důležitých oblastí cash flow. Pokud by se náhodou stalo, že by společnost, která
+    bude tento model v praxi používat, nebyla plátcem DPH, je možné tuto oblast z modelu
+    vyřadit bez větších problémů
+  */
+
+  // Například se může stát,že budeme mít 1. den v měsíci, který bude o víkendu a nepřijde ani neodejde v ten den žádná faktura či jiný doklad ovlivňující DPH
+  // Bude se to brat vzdy jen do pulky mesice (11. den max) (zatím beru celý měsíc)
+  // TODO - co se dny v mesici, ktere chybi, pak nelze delat prumery dnu mezi ostatními mesici (napč leden, unor, brezen) (vyřešeno uz v aggregateDPHvaluesbyDay, je to ale správně?)
+  // Bereme pro prdikci castku celkoveho dph minuleho mesice k vypoctu toho soucasneho
+  // Tigger na prepocet nove dodanych v soucasnym i minulym mesici
+  // zkontroluj cisla - vypada to dobře
+
+  // dphPrediction("QUARTERLY");
+
+  //loans
+  // Tvoje funkce:
+
+// alpha → zkoušíš 9 hodnot
+// beta → zkoušíš 9 hodnot
+// level → pouze inicializuješ z první hodnoty dat
+// trend → pouze inicializuješ z prvních dvou hodnot dat
+// rezidua → nejsou parametrem modelu, ale chybami
+
+// wage cost
+/*
+ je tu ještě možnost
+ toho, že bychom vzali jednotlivé části mezd (zálohy, povinné odvody, mzdy, daň) a zkusili
+ pro každou část mzdových výdajů vytvořit samostatný odhad.
+*/
+
+/*
+ Pro nás ovšem bude důležitější nehierarchická shluková analýza, která hledá různé
+ neprázdné podmnožiny s prázdným průnikem.
+*/
+
+/*
+ Rozhodli jsme se použít metodu k-means, která se snaží minimalizovat celkové sumy
+ čtverců vzdáleností uvnitř skupin. Vzdálenost je u této metody Euklidovská. 
+*/
+
+/*
+ Další nevýhodou je u metody k-meansto, že je velmi citlivá na odlehlá pozorování.
+ Tuto nevýhodu se budeme snažit minimalizovat tím, že z odhadu vynecháme velmi nízké
+ mzdové výdaje, které budou vůči zbylým výdajům zanedbatelné. - je (CHECK)
+*/
+
+// jako hraniční hodnota je vedená 100 000 Kč, mi si ji určíme dle naší simulace/analýzy - je (CHECK)
+
+/*
+ Následně potřebujeme každému shluku přiřadit částku. Abychom se vyvarovali vý
+ chylkám v datech, tak si pro každý shluk určíme mediánovou částku ze všech historických
+ hodnot daného shluku
+*/
+
+/*
+ Protože mzdy se měsíc od měsíce příliš neliší,
+ použijeme pro současný měsíc celkovou částku z minulého měsíce, tedy z prosince. Ta
+ činila-10 934 316 Kč.
+*/
+
+/*
+ Problémem této metody je to, že neumíme rozlišit, která platba půjde na kterou měnu,
+ všechny platby by tedy byly v českých korunách. Dále tu také nejsou zohledněny platby,
+ jejichž frekvence je menší než jeden měsíc. - při update, nechali jsme v jedne castce (neaplikovano)
+*/
+
+/*
+ Medián tedy v tomto případě
+ není příliš vhodným nástrojem.Zkusíme použít nástroj, který bere data více jako časovou
+ řadu a dává větší váhu na poslední pozorování.Zkusíme již popsanou náhodnou procházku
+ sdriftem. 
+*/

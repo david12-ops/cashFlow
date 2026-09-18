@@ -1,4 +1,4 @@
-import { DphData, MonthData, MonthsData } from "../zod-schemas/dphDataTypes";
+import { DphData, MonthData, MonthsData } from "../zod-schemas";
 
 function prepareDPHData(
   days: number,
@@ -485,26 +485,5 @@ function monthlyDPHPrediction(): number {
 }
 
 export default function dphPrediction(): number {
-  // nekdy muze stat davat a nekdy brat ?
-  // měsičními je na konzultaci
-  // čtvrtletními plátci DPH není, lze použít měsíční predikci (ta není 100%) se sečtením tří měsíců
-
-  /*
-    Pokud chce firma řešit predikci cash flow pomocí modelu, má s velmi velkou prav
-    děpodobností vyšší obrat než jeden milion korun. Proto DPH zahrneme do modelu jako
-    jednu z důležitých oblastí cash flow. Pokud by se náhodou stalo, že by společnost, která
-    bude tento model v praxi používat, nebyla plátcem DPH, je možné tuto oblast z modelu
-    vyřadit bez větších problémů
-  */
-
-  // Například se může stát,že budeme mít 1. den v měsíci, který bude o víkendu a nepřijde ani neodejde v ten den žádná faktura či jiný doklad ovlivňující DPH
-  // Bude se to brat vzdy jen do pulky mesice (11. den max) (zatím beru celý měsíc)
-  // TODO - co se dny v mesici, ktere chybi, pak nelze delat prumery dnu mezi ostatními mesici (napč leden, unor, brezen) (vyřešeno uz v aggregateDPHvaluesbyDay, je to ale správně?)
-  // Bereme pro prdikci castku celkoveho dph minuleho mesice k vypoctu toho soucasneho
-  // Tigger na prepocet nove dodanych v soucasnym i minulym mesici
-  // zkontroluj cisla - vypada to dobře
-
-  // dphPrediction("QUARTERLY");
-
   return monthlyDPHPrediction();
 }

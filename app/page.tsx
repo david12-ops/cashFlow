@@ -47,28 +47,31 @@ export default async function Page() {
         </div>
         <div>
           <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
-          {loanDelayPrediction.map((item, index) => (
-            <div key={index} style={{ marginBottom: "20px" }}>
-              <p>Date: {item.date}</p>
-              <p>Lower Bound: {item.lowerBound}</p>
-              <p>Prediction: {item.prediction}</p>
-              <p>Upper Bound: {item.upperBound}</p>
-            </div>
-          ))}
+          {loanDelayPrediction &&
+            loanDelayPrediction.confidenceIntervals.map((item, index) => (
+              <div key={index} style={{ marginBottom: "20px" }}>
+                <p>Date: {item.date}</p>
+                <p>Lower Bound: {item.lowerBound}</p>
+                <p>Prediction: {item.prediction}</p>
+                <p>Upper Bound: {item.upperBound}</p>
+              </div>
+            ))}
         </div>
 
         <div>
           <h1 style={{ textAlign: "center" }}>
             Invoices payment delay prediction
           </h1>
-          {invoicePaymentDelayPrediction.map((item, index) => (
-            <div key={index} style={{ marginBottom: "20px" }}>
-              <p>Date: {item.date}</p>
-              <p>Lower Bound: {item.lowerBound}</p>
-              <p>Prediction: {item.prediction}</p>
-              <p>Upper Bound: {item.upperBound}</p>
-            </div>
-          ))}
+          {invoicePaymentDelayPrediction.confidenceIntervals.map(
+            (item, index) => (
+              <div key={index} style={{ marginBottom: "20px" }}>
+                <p>Date: {item.date}</p>
+                <p>Lower Bound: {item.lowerBound}</p>
+                <p>Prediction: {item.prediction}</p>
+                <p>Upper Bound: {item.upperBound}</p>
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>

@@ -1,11 +1,14 @@
 import {
+  DataForSSEbestAplha,
+  PredictionData,
   LoansData,
   DataForHoltBestParams,
   DataForHoltWinterBestParams,
-  PredictionData,
-  IntervalData,
-  DataForSSEbestAplha,
-} from "../zod-schemas/loanDataTypes";
+} from "@/zod-schemas";
+import {
+  computeConfidenceIntervals,
+  createStatitics,
+} from "./statisticsFunctions";
 
 function prepareLoanData(): LoansData {
   const loanData: LoansData = [];
@@ -541,40 +544,6 @@ function pickbestPredictionModel(
   return bestModel;
 }
 
-// Confidence intervals
-function computeConfidenceIntervals(
-  rezidua: number[],
-  prediction: { date: string; value: number }[]
-): IntervalData {
-  const data: IntervalData = [];
-
-  const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
-  const meanOfRezidua = sumOfRezidua / rezidua.length;
-  const z = 1.96; // For a 95% confidence interval
-
-  let sumSquaredDeviations = 0;
-  for (let i = 0; i < rezidua.length; i++) {
-    sumSquaredDeviations += Math.pow(rezidua[i] - meanOfRezidua, 2);
-  }
-
-  for (let i = 0; i < prediction.length; i++) {
-    const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);
-    const h = i + 1; // Order of the month
-
-    const lowerBound = prediction[i].value - z * sigma * Math.sqrt(h);
-    const upperBound = prediction[i].value + z * sigma * Math.sqrt(h);
-
-    data.push({
-      date: prediction[i].date,
-      lowerBound,
-      prediction: prediction[i].value,
-      upperBound,
-    });
-  }
-
-  return data;
-}
-
 export default function providedLoansPrediction() {
   const data: LoansData = prepareLoanData();
 
@@ -661,42 +630,43 @@ export default function providedLoansPrediction() {
 
   console.log("best model " + bestModel);
 
-  let confidenceInterval = [];
+  let confidenceIntervals = [];
   switch (bestModel) {
     case "holt":
-      confidenceInterval = computeConfidenceIntervals(
+      confidenceIntervals = computeConfidenceIntervals(
         smoothedDataByHolt.rezidua,
         predictionHolt
       );
-      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("Confidence interval " + `${confidenceIntervals}`);
       console.log("test data " + testData);
-      return confidenceInterval;
+      return {
+        confidenceIntervals,
+        statistics: createStatitics(testData, confidenceIntervals),
+      };
     case "holt-winter":
-      confidenceInterval = computeConfidenceIntervals(
+      confidenceIntervals = computeConfidenceIntervals(
         smoothedDataByHoltWinter.rezidua,
         predictionHoltWinter
       );
-      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("Confidence interval " + `${confidenceIntervals}`);
       console.log("test data " + testData);
-      return confidenceInterval;
+      return {
+        confidenceIntervals,
+        statistics: createStatitics(testData, confidenceIntervals),
+      };
     case "ses":
-      confidenceInterval = computeConfidenceIntervals(
+      confidenceIntervals = computeConfidenceIntervals(
         smoothedDataBySES.rezidua,
         predictionSES
       );
-      console.log("Confidence interval " + `${confidenceInterval}`);
+      console.log("Confidence interval " + `${confidenceIntervals}`);
       console.log("test data " + testData);
-      return confidenceInterval;
+      return {
+        confidenceIntervals,
+        statistics: createStatitics(testData, confidenceIntervals),
+      };
     default:
       console.error("Uknown model " + `${bestModel}`);
-      return [];
+      return undefined;
   }
 }
-
-// Tvoje funkce:
-
-// alpha → zkoušíš 9 hodnot
-// beta → zkoušíš 9 hodnot
-// level → pouze inicializuješ z první hodnoty dat
-// trend → pouze inicializuješ z prvních dvou hodnot dat
-// rezidua → nejsou parametrem modelu, ale chybami

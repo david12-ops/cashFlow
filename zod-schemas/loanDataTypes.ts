@@ -11,11 +11,6 @@ export const LoanItemSchema = z.object({
 
 export const LoansDataSchema = z.array(LoanItemSchema);
 
-export const DataForSSEbestAplhaSchema = z.object({
-  smoothedValues: z.array(z.number()),
-  rezidua: z.array(z.number()),
-});
-
 export const ParamsFromHoltAlgorithmSchema = z.object({
   level: z.number(),
   trend: z.number(),
@@ -42,22 +37,8 @@ export const DataForHoltWinterBestParamsSchema = z.object({
   holtWinterValue: ParamsFromHoltWinterAlgorithmSchema,
 });
 
-export const PredictionDataSchema = z.array(
-  z.object({ date: z.string(), value: z.number() })
-);
-
-export const IntervalDataSchema = z.array(
-  z.object({
-    date: z.string(),
-    lowerBound: z.number(),
-    prediction: z.number(),
-    upperBound: z.number(),
-  })
-);
-
 export type LoanDataItem = z.infer<typeof LoanItemSchema>;
 export type LoansData = z.infer<typeof LoansDataSchema>;
-export type DataForSSEbestAplha = z.infer<typeof DataForSSEbestAplhaSchema>;
 export type ParamsFromHoltAlgorithm = z.infer<
   typeof ParamsFromHoltAlgorithmSchema
 >;
@@ -68,5 +49,3 @@ export type ParamsFromHoltWinterAlgorithm = z.infer<
 export type DataForHoltWinterBestParams = z.infer<
   typeof DataForHoltWinterBestParamsSchema
 >;
-export type PredictionData = z.infer<typeof PredictionDataSchema>;
-export type IntervalData = z.infer<typeof IntervalDataSchema>;

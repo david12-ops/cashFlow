@@ -1,9 +1,12 @@
 import {
   DataForSSEbestAplha,
-  IntervalData,
   InvoicesData,
   PredictionData,
-} from "@/zod-schemas/invoicesDataTypes";
+} from "@/zod-schemas";
+import {
+  computeConfidenceIntervals,
+  createStatitics,
+} from "./statisticsFunctions";
 
 function prepareInvoiceData(): InvoicesData {
   const invoiceData: InvoicesData = [];
@@ -224,41 +227,7 @@ function sesPrediction(
   return predictionData;
 }
 
-// Confidence intervals
-function computeConfidenceIntervals(
-  rezidua: number[],
-  prediction: { date: string; value: number }[]
-): IntervalData {
-  const data: IntervalData = [];
-
-  const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
-  const meanOfRezidua = sumOfRezidua / rezidua.length;
-  const z = 1.96; // For a 95% confidence interval
-
-  let sumSquaredDeviations = 0;
-  for (let i = 0; i < rezidua.length; i++) {
-    sumSquaredDeviations += Math.pow(rezidua[i] - meanOfRezidua, 2);
-  }
-
-  for (let i = 0; i < prediction.length; i++) {
-    const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);
-    const h = i + 1; // Order of the month
-
-    const lowerBound = prediction[i].value - z * sigma * Math.sqrt(h);
-    const upperBound = prediction[i].value + z * sigma * Math.sqrt(h);
-
-    data.push({
-      date: prediction[i].date,
-      lowerBound,
-      prediction: prediction[i].value,
-      upperBound,
-    });
-  }
-
-  return data;
-}
-
-export default function issuedInvoicesPrediction(): IntervalData {
+export default function issuedInvoicesPrediction() {
   const data: InvoicesData = prepareInvoiceData();
 
   const excludetData = excludeOutliers(data);
@@ -285,13 +254,16 @@ export default function issuedInvoicesPrediction(): IntervalData {
     smoothedDataBySES
   );
 
-  const confidenceInterval = computeConfidenceIntervals(
+  const confidenceIntervals = computeConfidenceIntervals(
     smoothedDataBySES.rezidua,
     predictionSES
   );
-  console.log("Confidence interval " + `${confidenceInterval}`);
+  console.log("Confidence interval " + `${confidenceIntervals}`);
   console.log("test data " + testData);
 
   console.log("Data for prediction of invoices: ", data);
-  return confidenceInterval;
+  return {
+    confidenceIntervals,
+    statistics: createStatitics(testData, confidenceIntervals),
+  };
 }
