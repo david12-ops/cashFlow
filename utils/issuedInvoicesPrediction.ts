@@ -205,10 +205,7 @@ function sesPrediction(
   countOfFutureMonths: number,
   lastDate: string,
   sesData: { smoothedValues: number[]; rezidua: number[] }
-): {
-  date: string;
-  value: number;
-}[] {
+): PredictionData {
   const [year, month] = lastDate.split("-").map(Number);
 
   const predictionData: PredictionData = [];
