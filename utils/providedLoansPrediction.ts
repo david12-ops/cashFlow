@@ -4,11 +4,17 @@ import {
   LoansData,
   DataForHoltBestParams,
   DataForHoltWinterBestParams,
+  IntervalData,
+  Statistics,
+  DataForLoanPrediction,
+  PredictionsData,
+  AlgorithmsParams,
 } from "@/zod-schemas";
 import {
   computeConfidenceIntervals,
   createStatitics,
 } from "./statisticsFunctions";
+import { UsedDataLoans } from "./classes";
 
 function prepareLoanData(): LoansData {
   const loanData: LoansData = [];
@@ -541,7 +547,13 @@ function pickbestPredictionModel(
   return bestModel;
 }
 
-export default function providedLoansPrediction() {
+export default function providedLoansPrediction():
+  | {
+      usedData: DataForLoanPrediction;
+      confidenceIntervals: IntervalData;
+      statistics: Statistics;
+    }
+  | undefined {
   const data: LoansData = prepareLoanData();
 
   const aggregatedData = aggregateLoansDelayByMonth(data);
@@ -552,8 +564,11 @@ export default function providedLoansPrediction() {
   const aics: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[] =
     [];
 
+  const countOfFutureMonthsToPredict = 6;
+
   // SES
   const bestAlphaPickedByMAE = pickBestAlphaByMAE(trainingData);
+  console.log("bestAlphaPickedByMAE SES " + bestAlphaPickedByMAE);
   const bestSESparams = pickBestAlphaByAIC(trainingData);
   const smoothedDataBySES = exponentialSmoothing(
     trainingData,
@@ -563,7 +578,7 @@ export default function providedLoansPrediction() {
   aics.push({ model: "ses", aicValue: bestSESparams.bestAic });
 
   const predictionSES = sesPrediction(
-    6,
+    countOfFutureMonthsToPredict,
     new Date(2025, 11, 1).toString(),
     smoothedDataBySES
   );
@@ -579,7 +594,7 @@ export default function providedLoansPrediction() {
   aics.push({ model: "holt", aicValue: bestHoltParams.bestAic });
 
   const predictionHolt = holtPrediction(
-    6,
+    countOfFutureMonthsToPredict,
     new Date(2025, 11, 1).toString(),
     "holt",
     {
@@ -600,7 +615,7 @@ export default function providedLoansPrediction() {
   aics.push({ model: "holt-winter", aicValue: bestHoltWinterParams.bestAic });
 
   const predictionHoltWinter = holtPrediction(
-    6,
+    countOfFutureMonthsToPredict,
     new Date(2025, 11, 1).toString(),
     "holt-winter",
     undefined,
@@ -611,21 +626,79 @@ export default function providedLoansPrediction() {
     }
   );
 
-  console.log("invoice data " + data);
+  const algorithmParams: AlgorithmsParams = [];
+  algorithmParams.push(
+    { model: "ses", alpha: bestSESparams.bestAlpha },
+    {
+      model: "holt",
+      params: {
+        alpha: bestHoltParams.bestAlpha,
+        beta: bestHoltParams.bestBeta,
+      },
+    },
+    {
+      model: "holt-winter",
+      params: {
+        alpha: bestHoltWinterParams.bestAlpha,
+        beta: bestHoltWinterParams.bestBeta,
+        gama: bestHoltWinterParams.bestGama,
+      },
+    }
+  );
 
-  console.log("best aplpha picked by MAE " + bestAlphaPickedByMAE);
-  console.log("smoothed data " + smoothedDataBySES);
-  console.log("prediction " + predictionSES);
+  const predictionsData: PredictionsData = [];
+  predictionsData.push(
+    {
+      model: "ses",
+      params: {
+        smoothedValues: smoothedDataBySES.smoothedValues,
+        rezidua: smoothedDataBySES.rezidua,
+      },
+      values: predictionSES,
+    },
+    {
+      model: "holt",
+      params: {
+        level: smoothedDataByHolt.level,
+        trend: smoothedDataByHolt.trend,
+        rezidua: smoothedDataByHolt.rezidua,
+      },
+      values: predictionHolt,
+    },
+    {
+      model: "holt-winter",
+      params: {
+        level: smoothedDataByHoltWinter.level,
+        trend: smoothedDataByHoltWinter.trend,
+        seasonalValues: smoothedDataByHoltWinter.seasonalValues,
+        rezidua: smoothedDataByHoltWinter.rezidua,
+      },
+      values: predictionHoltWinter,
+    }
+  );
 
-  console.log("smoothed data by Holt" + smoothedDataByHolt);
-  console.log("prediction by Holt" + predictionHolt);
+  const savedUsedData = new UsedDataLoans(
+    data,
+    trainingData,
+    testData,
+    aics,
+    algorithmParams,
+    predictionsData
+  );
 
-  console.log("smoothed data by Holt-Winter" + smoothedDataByHoltWinter);
-  console.log("prediction by Holt" + predictionHoltWinter);
+  const usedData: DataForLoanPrediction = {
+    data: savedUsedData.getData(),
+    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
+    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    aics,
+    algorithmsParams: savedUsedData.getAlgorithmsParams(),
+    predictionsData: {
+      countOfFutureMonthsToPredict,
+      data: savedUsedData.getPredictionsData(),
+    },
+  };
 
   const bestModel = pickbestPredictionModel(aics);
-
-  console.log("best model " + bestModel);
 
   let confidenceIntervals = [];
   switch (bestModel) {
@@ -634,9 +707,9 @@ export default function providedLoansPrediction() {
         smoothedDataByHolt.rezidua,
         predictionHolt
       );
-      console.log("Confidence interval " + `${confidenceIntervals}`);
-      console.log("test data " + testData);
+
       return {
+        usedData,
         confidenceIntervals,
         statistics: createStatitics(testData, confidenceIntervals),
       };
@@ -645,9 +718,9 @@ export default function providedLoansPrediction() {
         smoothedDataByHoltWinter.rezidua,
         predictionHoltWinter
       );
-      console.log("Confidence interval " + `${confidenceIntervals}`);
-      console.log("test data " + testData);
+
       return {
+        usedData,
         confidenceIntervals,
         statistics: createStatitics(testData, confidenceIntervals),
       };
@@ -656,9 +729,9 @@ export default function providedLoansPrediction() {
         smoothedDataBySES.rezidua,
         predictionSES
       );
-      console.log("Confidence interval " + `${confidenceIntervals}`);
-      console.log("test data " + testData);
+
       return {
+        usedData,
         confidenceIntervals,
         statistics: createStatitics(testData, confidenceIntervals),
       };

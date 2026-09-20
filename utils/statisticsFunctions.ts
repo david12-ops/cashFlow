@@ -13,11 +13,14 @@ export function createStatitics(
   for (let i = 0; i < testData.length; i++) {
     sumForMae += Math.abs(testData[i] - predictedData[i].prediction);
     sumForRMSE += Math.pow(testData[i] - predictedData[i].prediction, 2);
-    sumForMape += Math.abs(
-      (testData[i] - predictedData[i].prediction) / testData[i]
-    );
-    sumForRelativeError +=
-      (testData[i] - predictedData[i].prediction) / testData[i];
+
+    if (testData[i] !== 0) {
+      sumForMape += Math.abs(
+        (testData[i] - predictedData[i].prediction) / testData[i]
+      );
+      sumForRelativeError +=
+        (testData[i] - predictedData[i].prediction) / testData[i];
+    }
   }
 
   const mae = (1 / testData.length) * sumForMae;
@@ -25,6 +28,18 @@ export function createStatitics(
   const mape = (100 / testData.length) * sumForMape;
   // average of the signed relative error
   const relativeError = (1 / testData.length) * sumForRelativeError * 100;
+
+  if (testData.some(value => value === 0)) {
+    console.warn(
+      "Test data contains zero values. MAPE and relative error cannot be calculated for these values."
+    );
+    return {
+      valueMAE: mae,
+      valueMAPE: null,
+      valueRMSE: rmse,
+      relativeErrorAvg: null,
+    };
+  }
 
   return {
     valueMAE: mae,

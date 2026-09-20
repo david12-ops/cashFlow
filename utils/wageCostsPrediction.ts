@@ -3,10 +3,20 @@ import {
   Cluster,
   Currency,
   CurrencyConvertMap,
-  PredictionWageResult,
   WagesData,
   EchangeRates,
+  PredictionData,
+  IntervalData,
+  Statistics,
+  PredictionClusterResults,
+  IterationsKmeansData,
+  DataForWagePrediction,
 } from "@/zod-schemas";
+import {
+  computeConfidenceIntervals,
+  createStatitics,
+} from "./statisticsFunctions";
+import { UsedDataWages } from "./classes";
 
 function createCurrencyRatesMap(year: number): CurrencyConvertMap {
   const exchangeRates: EchangeRates = {
@@ -665,10 +675,10 @@ function selectCentroids(k: number, data: WagesData): number[] {
   return centroids;
 }
 
-function aggregateClusterByMonth(cluster: WagesData): number[] {
+function aggregateDataByMonth(data: WagesData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
-  cluster.forEach(item => {
+  data.forEach(item => {
     const key = `${item.transactionDate.getFullYear()} - ${item.transactionDate.getMonth()}`;
 
     if (!monthlyValues.has(key)) {
@@ -685,10 +695,24 @@ function aggregateClusterByMonth(cluster: WagesData): number[] {
     });
 }
 
-function randomWalkWithDrift(monthlyValues: number[]): number {
-  if (monthlyValues.length === 0) return 0;
+function randomWalkWithDrift(
+  monthlyValues: number[],
+  maxDate: Date,
+  countOfFutureMonthsToPredict: number
+): PredictionData {
+  if (monthlyValues.length === 0) return [];
 
-  if (monthlyValues.length === 1) return monthlyValues[0];
+  const predictionDate = new Date(maxDate);
+  predictionDate.setMonth(predictionDate.getMonth() + 1);
+
+  if (monthlyValues.length === 1) {
+    return [
+      {
+        date: `${predictionDate.getFullYear()}-${predictionDate.getMonth() + 1}`,
+        value: monthlyValues[0],
+      },
+    ];
+  }
 
   let sumChanges = 0;
 
@@ -698,21 +722,40 @@ function randomWalkWithDrift(monthlyValues: number[]): number {
 
   const drift = sumChanges / (monthlyValues.length - 1);
 
-  const lastValue = monthlyValues[monthlyValues.length - 1];
+  let lastValue = monthlyValues[monthlyValues.length - 1];
 
-  return lastValue + drift;
+  const predictions: PredictionData = [];
+
+  for (let i = 0; i < countOfFutureMonthsToPredict; i++) {
+    lastValue = lastValue + drift;
+
+    predictions.push({
+      date: `${predictionDate.getFullYear()}-${predictionDate.getMonth() + 1}`,
+      value: lastValue,
+    });
+
+    predictionDate.setMonth(predictionDate.getMonth() + 1);
+  }
+
+  return predictions;
 }
 
 function predictClustersWithDrift(
-  clusteredData: Cluster
-): PredictionWageResult[] {
-  const values: PredictionWageResult[] = [];
+  clusteredData: Cluster,
+  maxDate: Date,
+  countOfFutureMonthsToPredict: number
+): PredictionClusterResults {
+  const values: PredictionClusterResults = [];
 
   Object.values(clusteredData).forEach(cluster => {
-    const monthlyValues = aggregateClusterByMonth(cluster);
+    const monthlyValues = aggregateDataByMonth(cluster);
 
     values.push({
-      predictedValue: randomWalkWithDrift(monthlyValues),
+      predictedValues: randomWalkWithDrift(
+        monthlyValues,
+        maxDate,
+        countOfFutureMonthsToPredict
+      ),
       predictionValues: cluster,
     });
   });
@@ -754,11 +797,17 @@ function filterDataByPercentil(data: WagesData): WagesData {
 // At the moment when there will be another feature, for example payment delay
 // function standardizeData() {}
 
-export default function wageCostsPrediction(): number {
+export default function wageCostsPrediction(): {
+  usedData: DataForWagePrediction;
+  confidenceIntervals: IntervalData;
+  statistics: Statistics;
+} {
   const data: WagesData = prepareWageCostData();
 
   const trainingData = filterDataByPercentil(data.slice(0, 48));
   const testData = data.slice(48, 60);
+
+  const countOfFutureMonthsToPredict = 12;
 
   // Centroids have only baseAmount
 
@@ -773,6 +822,9 @@ export default function wageCostsPrediction(): number {
   let selectedCentroids = selectCentroids(optimalK, trainingData);
 
   oldCentroids = selectedCentroids;
+
+  // for visualization
+  const iterationsKmeansData: IterationsKmeansData = [];
 
   while (continueAlg) {
     const values: AmountsPairedToCentroid = [];
@@ -800,20 +852,76 @@ export default function wageCostsPrediction(): number {
     newCentroids = newCentroidsAvgAmount;
     selectedCentroids = newCentroidsAvgAmount;
 
+    iterationsKmeansData.push({
+      values,
+      clusteredData,
+      oldCentroids,
+      newCentroids,
+    });
+
     continueAlg = continueKmeans(oldCentroids, newCentroids);
 
     oldCentroids = newCentroids;
   }
 
-  const predictedClusterAmounts = predictClustersWithDrift(clusteredData);
-  const predictionValue = predictedClusterAmounts.reduce(
-    (prev, curr) => prev + curr.predictedValue,
-    0
+  const maxDate = trainingData.reduce((max, item) => {
+    return item.transactionDate > max ? item.transactionDate : max;
+  }, data[0].transactionDate);
+
+  const predictedClusterAmounts = predictClustersWithDrift(
+    clusteredData,
+    maxDate,
+    countOfFutureMonthsToPredict
   );
 
-  console.log("test data: ", testData);
-  console.log("prediction data " + predictedClusterAmounts);
-  console.log("prediction wage " + predictionValue);
+  const summedPredictions: { date: string; value: number }[] = [];
 
-  return predictionValue;
+  for (let i = 0; i < 12; i++) {
+    let sumByMonth = 0;
+
+    predictedClusterAmounts.forEach(cluster => {
+      sumByMonth += cluster.predictedValues[i].value;
+    });
+
+    summedPredictions.push({
+      date: predictedClusterAmounts[0].predictedValues[i].date,
+      value: sumByMonth,
+    });
+  }
+
+  const aggregatedTrainingData = aggregateDataByMonth(trainingData);
+  const aggregatedTestData = aggregateDataByMonth(testData);
+
+  const rezidua = aggregatedTestData.map(
+    (item, index) => item - summedPredictions[index].value
+  );
+
+  const confidenceIntervals = computeConfidenceIntervals(
+    rezidua,
+    summedPredictions
+  );
+
+  const savedUsedData = new UsedDataWages(
+    data,
+    aggregatedTrainingData,
+    aggregatedTestData,
+    optimalK,
+    iterationsKmeansData,
+    predictedClusterAmounts
+  );
+
+  const usedData: DataForWagePrediction = {
+    data: savedUsedData.getData(),
+    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
+    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    optimalK,
+    iterationsKmeansData: savedUsedData.getIterationsKmeansData(),
+    predictedClusterAmounts: savedUsedData.getPredictedClusterAmounts(),
+  };
+
+  return {
+    usedData,
+    confidenceIntervals,
+    statistics: createStatitics(aggregatedTestData, confidenceIntervals),
+  };
 }

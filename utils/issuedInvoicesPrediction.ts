@@ -1,12 +1,16 @@
 import {
+  DataForInvoicePrediction,
   DataForSSEbestAplha,
+  IntervalData,
   InvoicesData,
   PredictionData,
+  Statistics,
 } from "@/zod-schemas";
 import {
   computeConfidenceIntervals,
   createStatitics,
 } from "./statisticsFunctions";
+import { UsedDataInvoices } from "./classes";
 
 function prepareInvoiceData(): InvoicesData {
   const invoiceData: InvoicesData = [];
@@ -224,19 +228,21 @@ function sesPrediction(
   return predictionData;
 }
 
-export default function issuedInvoicesPrediction() {
+export default function issuedInvoicesPrediction(): {
+  usedData: DataForInvoicePrediction;
+  confidenceIntervals: IntervalData;
+  statistics: Statistics;
+} {
   const data: InvoicesData = prepareInvoiceData();
 
   const excludetData = excludeOutliers(data);
 
-  console.log("excludet data " + excludetData);
-
   const aggregatedData = aggregateInvoicesPaymentDelayByMonth(excludetData);
-
-  console.log("aggregated data " + aggregatedData);
 
   const trainingData = aggregatedData.slice(0, 48);
   const testData = aggregatedData.slice(48, 60);
+
+  const countOfFutureMonthsToPredict = 6;
 
   // SES
   const bestSESparams = pickBestAlphaByAIC(trainingData);
@@ -246,7 +252,7 @@ export default function issuedInvoicesPrediction() {
   );
 
   const predictionSES = sesPrediction(
-    6,
+    countOfFutureMonthsToPredict,
     new Date(2025, 11, 1).toString(),
     smoothedDataBySES
   );
@@ -255,11 +261,39 @@ export default function issuedInvoicesPrediction() {
     smoothedDataBySES.rezidua,
     predictionSES
   );
-  console.log("Confidence interval " + `${confidenceIntervals}`);
-  console.log("test data " + testData);
 
-  console.log("Data for prediction of invoices: ", data);
+  const savedUsedData = new UsedDataInvoices(
+    data,
+    excludetData,
+    trainingData,
+    testData,
+    {
+      alpha: bestSESparams.bestAlpha,
+      aic: bestSESparams.bestAic,
+    },
+    {
+      params: {
+        smoothedValues: smoothedDataBySES.smoothedValues,
+        rezidua: smoothedDataBySES.rezidua,
+      },
+      values: predictionSES,
+    }
+  );
+
+  const usedData: DataForInvoicePrediction = {
+    data: savedUsedData.getData(),
+    excludetData: savedUsedData.getEexcludetData(),
+    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
+    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    algorithmParams: savedUsedData.getAlgorithmParams(),
+    predictionsData: {
+      countOfFutureMonthsToPredict,
+      data: savedUsedData.getPredictionData(),
+    },
+  };
+
   return {
+    usedData,
     confidenceIntervals,
     statistics: createStatitics(testData, confidenceIntervals),
   };

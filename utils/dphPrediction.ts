@@ -1,10 +1,22 @@
-import { DphData, MonthData, MonthsData } from "../zod-schemas";
+import {
+  DataForDPHprediction,
+  DphData,
+  IntervalData,
+  MonthData,
+  MonthsData,
+  Statistics,
+} from "../zod-schemas";
+import { UsedDPHdata } from "./classes";
+import {
+  computeConfidenceIntervals,
+  createStatitics,
+} from "./statisticsFunctions";
 
 function prepareDPHData(
   days: number,
   period: "MONTHLY" | "QUARTERLY",
   yearsToAddBack?: number
-): DphData | [] {
+): DphData {
   const monthDaysInOneYear: DphData = {};
   const monthDaysAcrossPastYears: DphData = {};
 
@@ -38,7 +50,8 @@ function prepareDPHData(
     const additionalDays = prepareDPHData(93, "MONTHLY") as DphData;
     const lastKey = getLastKey(additionalDays);
 
-    if (!lastKey) return [];
+    if (!lastKey) return {};
+
     const [year, month] = lastKey.split("-");
     lastDate.year = parseInt(year, 10);
     lastDate.month = parseInt(month, 10);
@@ -80,7 +93,7 @@ function prepareDPHData(
     return { ...monthDaysAcrossPastYears, ...additionalDays };
   }
 
-  return [];
+  return {};
 }
 
 function computeDPHvalue(
@@ -248,9 +261,6 @@ function normalizedInPercent(
     };
   });
 
-  // console.log("number of days in the month " + activeMonthDaysCount);
-  // console.log("number of elapsed days of the active month " + activeDaysCount);
-
   const redistributed = redistributeExtraDays(
     dataInPercent,
     activeDaysCount,
@@ -330,19 +340,13 @@ function redistributeExtraDays(
 }
 
 function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
-  aggNumbersInPercent: MonthData;
+  aggMonthNumbersInPercent: MonthData;
   activeMonth: MonthData;
   sumOfActiveMonth: number;
 } {
-  const closedMoths = getMonths(data, "MONTHLY", "CLOSED") as {
-    Date_val: Date;
-    Dph_val: number;
-  }[][];
+  const closedMoths = getMonths(data, "MONTHLY", "CLOSED") as MonthsData;
 
-  const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as {
-    Date_val: Date;
-    Dph_val: number;
-  }[];
+  const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as MonthData;
 
   if (
     !closedMoths ||
@@ -351,7 +355,7 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
     activeMonth.length === 0
   )
     return {
-      aggNumbersInPercent: [],
+      aggMonthNumbersInPercent: [],
       activeMonth: [],
       sumOfActiveMonth: 0,
     };
@@ -364,9 +368,6 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   const aggregatedClosedMonth =
     aggregateClosedMonthsDPHvaluesbyDay(closedMoths);
 
-  console.log("data", data, "data.length", Object.keys(data).length);
-  console.log("aggregatedMonth", aggregatedClosedMonth);
-
   const normalizedsInPercent = normalizedInPercent(
     aggregatedClosedMonth,
     aggregatedClosedMonth.reduce((sum, day) => sum + (day.Dph_val ?? 0), 0),
@@ -374,32 +375,23 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
     getDaysInMonths(activeMonth[0].Date_val)
   );
 
-  console.log("normalizedsInPercent", normalizedsInPercent);
-
   return {
-    aggNumbersInPercent: normalizedsInPercent,
+    aggMonthNumbersInPercent: normalizedsInPercent,
     activeMonth: activeMonth,
     sumOfActiveMonth: sumOfdphInActiveMonth,
   };
 }
 
-function prepareTestingData(data: DphData): {
-  data: Record<
-    string,
-    {
-      Date_val: Date;
-      Dph_val: number;
-    }[]
-  >;
-  key: string;
-} {
+function prepareTestingData(
+  data: DphData
+): { key: string; data: DphData } | null {
   const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as MonthData;
 
   if (!activeMonth || activeMonth.length === 0) {
     console.warn(
       "No active month found in data, prediction cannot be performed correctly."
     );
-    return { data: {}, key: "" };
+    return null;
   }
 
   const activeDateInActiveMonth = activeMonth![0].Date_val;
@@ -417,13 +409,7 @@ function prepareTestingData(data: DphData): {
   console.log(key);
   console.log(values);
 
-  const newMonth: Record<
-    string,
-    {
-      Date_val: Date;
-      Dph_val: number;
-    }[]
-  > = {};
+  const newMonth: DphData = {};
 
   newMonth[keyDate] = [];
 
@@ -438,52 +424,118 @@ function prepareTestingData(data: DphData): {
     });
   });
 
-  return { data: newMonth, key: keyDate };
+  return { key, data: newMonth };
 }
 
-function monthlyDPHPrediction(): number {
-  let data = prepareDPHData(124, "MONTHLY") as DphData;
+function monthlyDPHPrediction():
+  | {
+      usedData: DataForDPHprediction;
+      confidenceIntervals: IntervalData;
+      statistics: Statistics;
+    }
+  | undefined {
+  let data = prepareDPHData(124, "MONTHLY");
 
-  if (Object.values(data).some(days => days.length === 0)) return 0;
-
-  // Its for testing data, we need to prepare the last active month, and then change the days
-  const testingData = prepareTestingData(data);
-
-  data = {
-    ...Object.fromEntries(Object.entries(data).slice(0, -1)),
-    ...testingData.data,
-  };
-
-  data = Object.fromEntries(Object.entries(data).slice(0, 124));
-
-  const { aggNumbersInPercent, activeMonth, sumOfActiveMonth } =
-    aggregateMonthlyDPHvaluesbyDay(data);
-
-  const historyPercentage = aggNumbersInPercent
-    .slice(0, activeMonth.length)
-    .reduce((sum, val) => (sum += val.Dph_val ?? 0), 0);
-
-  const predictedDph = (sumOfActiveMonth / historyPercentage) * 100;
-
-  console.log(
-    "sum of percent",
-    aggNumbersInPercent.reduce((sum, day) => sum + day.Dph_val, 0)
-  );
-
-  console.log("testingData", testingData);
-  console.log(
-    "sum from testingData",
-    testingData.data[testingData.key].reduce((sum, day) => sum + day.Dph_val, 0)
-  );
-  console.log("predicted", predictedDph);
-
-  if (historyPercentage <= 0 || sumOfActiveMonth <= 0) {
-    return 0;
+  if (Object.values(data).some(days => days.length === 0)) {
+    console.warn(
+      "Some months contain no data. Prediction cannot be performed."
+    );
+    return undefined;
   }
 
-  return predictedDph;
+  // Its for testing data, we need to prepare the last active month, and then change the days
+  const testData = prepareTestingData(data);
+
+  if (testData && testData.data !== null) {
+    data = {
+      ...Object.fromEntries(Object.entries(data).slice(0, -1)),
+      ...testData.data,
+    };
+
+    const trainingData = Object.fromEntries(Object.entries(data).slice(0, 124));
+
+    const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
+      aggregateMonthlyDPHvaluesbyDay(data);
+
+    const historySumPercentage = aggMonthNumbersInPercent
+      .slice(0, activeMonth.length)
+      .reduce((sum, val) => (sum += val.Dph_val ?? 0), 0);
+
+    if (historySumPercentage <= 0 || sumOfActiveMonth <= 0) {
+      console.warn(
+        "Historical sum or active month sum is zero or negative. Prediction cannot be performed."
+      );
+      return undefined;
+    }
+
+    const predictedDph = (sumOfActiveMonth / historySumPercentage) * 100;
+
+    const predictedData = aggMonthNumbersInPercent.map(item => {
+      return {
+        date: `${item.Date_val.getFullYear()}-${String(item.Date_val.getMonth() + 1).padStart(2, "0")}-${String(item.Date_val.getDate()).padStart(2, "0")}`,
+        value: (predictedDph / 100) * item.Dph_val,
+      };
+    });
+
+    const rezidua = testData.data[testData.key].map(
+      (item, index) => item.Dph_val - predictedData[index].value
+    );
+
+    const confidenceIntervals = computeConfidenceIntervals(
+      rezidua,
+      predictedData
+    );
+
+    const savedUsedData = new UsedDPHdata(
+      data,
+      trainingData,
+      testData,
+      aggMonthNumbersInPercent,
+      activeMonth,
+      predictedDph
+    );
+
+    const usedData: DataForDPHprediction = {
+      data: savedUsedData.getData(),
+      trainingData: savedUsedData.getTrainingData(),
+      testData: savedUsedData.getTestData(),
+      aggMonthNumbersInPercent: savedUsedData.getAggMonthNumbersInPercent(),
+      activeMonth: savedUsedData.getActiveMonth(),
+    };
+
+    return {
+      usedData,
+      confidenceIntervals,
+      statistics: createStatitics(
+        testData.data[testData.key].map(item => {
+          return item.Dph_val;
+        }),
+        confidenceIntervals
+      ),
+    };
+  } else {
+    console.warn(
+      "No active month found in data, prediction cannot be performed correctly."
+    );
+    return undefined;
+  }
 }
 
-export default function dphPrediction(): number {
-  return monthlyDPHPrediction();
+export default function dphPrediction():
+  | {
+      usedData: DataForDPHprediction;
+      confidenceIntervals: IntervalData;
+      statistics: Statistics;
+    }
+  | undefined {
+  const monthlyPrediction = monthlyDPHPrediction();
+
+  if (monthlyPrediction === undefined) {
+    console.warn(
+      "Historical sum or active month sum is zero or negative. Prediction cannot be performed."
+    );
+    return undefined;
+  }
+
+  return monthlyPrediction;
 }
