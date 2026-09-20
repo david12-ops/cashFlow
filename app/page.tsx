@@ -36,14 +36,27 @@ export default async function Page() {
         <div>
           <h1 style={{ textAlign: "center" }}>Monthly (DPH)</h1>
           {/* {<ChartComp text="ahoj" />} */}
-          <p style={{ textAlign: "center", fontSize: "30px" }}>
-            {monthlyDPHPredNumber}
-          </p>
+          {monthlyDPHPredNumber &&
+            monthlyDPHPredNumber.confidenceIntervals.map((item, index) => (
+              <div key={index} style={{ marginBottom: "20px" }}>
+                <p>Date: {item.date}</p>
+                <p>Lower Bound: {item.lowerBound}</p>
+                <p>Prediction: {item.prediction}</p>
+                <p>Upper Bound: {item.upperBound}</p>
+              </div>
+            ))}
         </div>
 
         <div>
           <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
-          <p>Predicted wage amount : {wagePrediction}</p>
+          {wagePrediction.confidenceIntervals.map((item, index) => (
+            <div key={index} style={{ marginBottom: "20px" }}>
+              <p>Date: {item.date}</p>
+              <p>Lower Bound: {item.lowerBound}</p>
+              <p>Prediction: {item.prediction}</p>
+              <p>Upper Bound: {item.upperBound}</p>
+            </div>
+          ))}
         </div>
         <div>
           <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
