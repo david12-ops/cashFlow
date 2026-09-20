@@ -78,3 +78,24 @@
  řadu a dává větší váhu na poslední pozorování.Zkusíme již popsanou náhodnou procházku
  sdriftem. 
 */
+
+//insiprace na page pro loan
+//  console.log("invoice data " + data);
+
+//   console.log("best aplpha picked by MAE " + bestAlphaPickedByMAE);
+//   console.log("smoothed data " + smoothedDataBySES);
+//   console.log("prediction " + predictionSES);
+
+//   console.log("smoothed data by Holt" + smoothedDataByHolt);
+//   console.log("prediction by Holt" + predictionHolt);
+
+//   console.log("smoothed data by Holt-Winter" + smoothedDataByHoltWinter);
+//   console.log("prediction by Holt" + predictionHoltWinter)
+
+// pro invoice
+// console.log("excludet data " + excludetData);
+//   console.log("aggregated data " + aggregatedData);
+//   console.log("Confidence interval " + `${confidenceIntervals}`);
+//   console.log("test data " + testData);
+
+//   console.log("Data for prediction of invoices: ", data);
