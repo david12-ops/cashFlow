@@ -14,7 +14,25 @@ export const MonthDataSchema = z.array(
   })
 );
 
-export const MonthsData = z.array(MonthDataSchema);
-export type MonthsData = z.infer<typeof MonthsData>;
+export const MonthsDataSchema = z.array(MonthDataSchema);
+
+export const TestDataSchema = z
+  .object({
+    key: z.string(),
+    data: DphDataSchema,
+  })
+  .nullable();
+
+export const DataForDPHpredictionSchema = z.object({
+  data: DphDataSchema,
+  trainingData: DphDataSchema,
+  testData: TestDataSchema,
+  aggMonthNumbersInPercent: MonthDataSchema,
+  activeMonth: MonthDataSchema,
+});
+
 export type MonthData = z.infer<typeof MonthDataSchema>;
+export type MonthsData = z.infer<typeof MonthsDataSchema>;
 export type DphData = z.infer<typeof DphDataSchema>;
+export type TestData = z.infer<typeof TestDataSchema>;
+export type DataForDPHprediction = z.infer<typeof DataForDPHpredictionSchema>;

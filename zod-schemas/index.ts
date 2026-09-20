@@ -20,8 +20,8 @@ export const IntervalDataSchema = z.array(
 export const StatisticsSchema = z.object({
   valueMAE: z.number(),
   valueRMSE: z.number(),
-  valueMAPE: z.number(),
-  relativeErrorAvg: z.number(),
+  valueMAPE: z.number().nullable(),
+  relativeErrorAvg: z.number().nullable(),
 });
 
 export const DataForSSEbestAplhaSchema = z.object({

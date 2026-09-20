@@ -23,10 +23,19 @@ export const AmountsPairedToCentroidSchema = z.array(
 
 export const ClusterSchema = z.record(z.number(), z.array(WageItemSchema));
 
-export const PredictionWageResultSchema = z.object({
-  predictedValue: z.number(),
+export const PredictionClusterResultSchema = z.object({
+  predictedValues: z.array(
+    z.object({
+      date: z.string(),
+      value: z.number(),
+    })
+  ),
   predictionValues: WagesDataSchema,
 });
+
+export const PredictionClusterResultsSchema = z.array(
+  PredictionClusterResultSchema
+);
 
 export const CurrencyConvertMapSchema = z.record(
   CurrencySchema,
@@ -43,6 +52,24 @@ export const EchangeRatesSchema = z.record(
   CurrencyConvertMapSchema
 );
 
+export const IterationsKmeansDataSchema = z.array(
+  z.object({
+    values: AmountsPairedToCentroidSchema,
+    clusteredData: ClusterSchema,
+    oldCentroids: z.array(z.number()),
+    newCentroids: z.array(z.number()),
+  })
+);
+
+export const DataForWagePredictionSchema = z.object({
+  data: WagesDataSchema,
+  aggregatedTrainingData: z.array(z.number()),
+  aggregatedTestData: z.array(z.number()),
+  optimalK: z.number(),
+  iterationsKmeansData: IterationsKmeansDataSchema,
+  predictedClusterAmounts: PredictionClusterResultsSchema,
+});
+
 export type Currency = z.infer<typeof CurrencySchema>;
 export type WageDataItem = z.infer<typeof WageItemSchema>;
 export type WagesData = z.infer<typeof WagesDataSchema>;
@@ -50,6 +77,13 @@ export type AmountsPairedToCentroid = z.infer<
   typeof AmountsPairedToCentroidSchema
 >;
 export type Cluster = z.infer<typeof ClusterSchema>;
-export type PredictionWageResult = z.infer<typeof PredictionWageResultSchema>;
+export type PredictionClusterResult = z.infer<
+  typeof PredictionClusterResultSchema
+>;
+export type PredictionClusterResults = z.infer<
+  typeof PredictionClusterResultsSchema
+>;
 export type CurrencyConvertMap = z.infer<typeof CurrencyConvertMapSchema>;
 export type EchangeRates = z.infer<typeof EchangeRatesSchema>;
+export type IterationsKmeansData = z.infer<typeof IterationsKmeansDataSchema>;
+export type DataForWagePrediction = z.infer<typeof DataForWagePredictionSchema>;
