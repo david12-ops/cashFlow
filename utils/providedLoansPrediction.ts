@@ -185,20 +185,16 @@ function exponentialSmoothing(
   const smoothedValues: number[] = [];
   const rezidua: number[] = [];
 
-  let currentVal;
-
   for (let i = 0; i < data.length; i++) {
     if (i === 0) {
-      currentVal = data[0];
-      smoothedValues[i] = currentVal;
+      smoothedValues[i] = data[i];
     } else {
-      rezidua[i] = data[i] - smoothedValues[i - 1];
+      const previousSmoothValue = smoothedValues[i - 1];
 
-      currentVal = data[i];
-      const previousSmoothVal = smoothedValues[i - 1];
+      rezidua.push(data[i] - previousSmoothValue);
 
       const newSmoothValue =
-        alpha * currentVal + (1 - alpha) * previousSmoothVal;
+        alpha * data[i] + (1 - alpha) * previousSmoothValue;
       smoothedValues[i] = newSmoothValue;
     }
   }
@@ -208,10 +204,11 @@ function exponentialSmoothing(
 
 function sesPrediction(
   countOfFutureMonths: number,
-  lastDate: string,
+  lastDate: Date,
   sesData: { smoothedValues: number[]; rezidua: number[] }
 ): PredictionData {
-  const [year, month] = lastDate.split("-").map(Number);
+  const year = lastDate.getFullYear();
+  const month = lastDate.getMonth();
 
   const predictionData: PredictionData = [];
   const lastSmoothedValue =
@@ -271,41 +268,38 @@ function holtExponentialSmoothing(
   beta: number
 ): { level: number; trend: number; rezidua: number[] } {
   const rezidua: number[] = [];
-  const values = [{ level: 0, trend: 0, rezidua }];
 
-  let currentLevel;
-  let trend;
+  let currentLevel = 0;
+  let trend = 0;
 
   for (let i = 0; i < aggregatedData.length; i++) {
     if (i === 0) {
       currentLevel = aggregatedData[i];
-      trend = aggregatedData[i + 1] - aggregatedData[i];
 
-      values[i] = {
-        level: currentLevel,
-        trend,
-        rezidua,
-      };
+      if (aggregatedData.length > 1) {
+        trend = aggregatedData[i + 1] - aggregatedData[i];
+      } else {
+        trend = 0;
+      }
     } else {
-      rezidua[i] =
-        aggregatedData[i] - (values[i - 1].level + values[i - 1].trend);
+      rezidua.push(aggregatedData[i] - (currentLevel + trend));
+
+      const previousLevel = currentLevel;
+      const previousTrend = trend;
 
       currentLevel =
         alpha * aggregatedData[i] +
-        (1 - alpha) * (values[i - 1].level + values[i - 1].trend);
+        (1 - alpha) * (previousLevel + previousTrend);
       trend =
-        beta * (currentLevel - values[i - 1].level) +
-        (1 - beta) * values[i - 1].trend;
-
-      values[i] = {
-        level: currentLevel,
-        trend,
-        rezidua,
-      };
+        beta * (currentLevel - previousLevel) + (1 - beta) * previousTrend;
     }
   }
 
-  return values[values.length - 1];
+  return {
+    level: currentLevel,
+    trend,
+    rezidua,
+  };
 }
 
 // Holt-Winters
@@ -365,6 +359,10 @@ function pickBestHoltWintersParameters(aggregatedData: number[]): {
 }
 
 function computeSeasonality(aggregatedData: number[]): number[] {
+  if (aggregatedData.length < 12) {
+    throw new Error("Holt-Winters vyžaduje alespoň 12 hodnot pro sezónnost.");
+  }
+
   const valuesOfFirstYear = aggregatedData.slice(0, 12);
   const averageValueOfFirstYear =
     valuesOfFirstYear.reduce((acc, val) => acc + val, 0) /
@@ -392,81 +390,53 @@ function holtWintersExponentialSmoothing(
 } {
   const rezidua: number[] = [];
 
-  let currentLevel;
-  let trend;
+  let currentLevel = 0;
+  let trend =
+    aggregatedData.length > 11
+      ? (aggregatedData[11] - aggregatedData[0]) / 11
+      : 0;
 
   const seasonalityValues = computeSeasonality(aggregatedData);
-  const values = [
-    { level: 0, trend: 0, seasonalValues: seasonalityValues, rezidua },
-  ];
 
   for (let i = 0; i < aggregatedData.length; i++) {
     const seasonalIndex = i % 12;
 
     if (i === 0) {
       currentLevel = aggregatedData[i];
-      trend = (aggregatedData[11] - aggregatedData[i]) / 11;
-
-      values[i] = {
-        level: currentLevel,
-        trend,
-        seasonalValues: seasonalityValues,
-        rezidua,
-      };
-    } else if (i < 12) {
-      rezidua[i] =
-        aggregatedData[i] -
-        (values[i - 1].level +
-          values[i - 1].trend +
-          seasonalityValues[seasonalIndex]);
-
-      currentLevel =
-        alpha * aggregatedData[i] +
-        (1 - alpha) * (values[i - 1].level + values[i - 1].trend);
-      trend =
-        beta * (currentLevel - values[i - 1].level) +
-        (1 - beta) * values[i - 1].trend;
-
-      values[i] = {
-        level: currentLevel,
-        trend,
-        seasonalValues: seasonalityValues,
-        rezidua,
-      };
-    } else {
-      rezidua[i] =
-        aggregatedData[i] -
-        (values[i - 1].level +
-          values[i - 1].trend +
-          values[i - 12].seasonalValues[seasonalIndex]);
-
-      currentLevel =
-        alpha * aggregatedData[i] +
-        (1 - alpha) * (values[i - 1].level + values[i - 1].trend);
-      trend =
-        beta * (currentLevel - values[i - 1].level) +
-        (1 - beta) * values[i - 1].trend;
-      const newSeasonalValue =
-        gama * (aggregatedData[i] - currentLevel) +
-        (1 - gama) * seasonalityValues[seasonalIndex];
-
-      seasonalityValues[seasonalIndex] = newSeasonalValue;
-
-      values[i] = {
-        level: currentLevel,
-        trend,
-        seasonalValues: seasonalityValues,
-        rezidua,
-      };
+      continue;
     }
+
+    const previousLevel = currentLevel;
+    const previousTrend = trend;
+
+    const previousSeasonalValue = seasonalityValues[seasonalIndex];
+
+    const prediction = previousLevel + previousTrend + previousSeasonalValue;
+
+    rezidua.push(aggregatedData[i] - prediction);
+
+    currentLevel =
+      alpha * (aggregatedData[i] - previousSeasonalValue) +
+      (1 - alpha) * (previousLevel + previousTrend);
+    trend = beta * (currentLevel - previousLevel) + (1 - beta) * previousTrend;
+    const newSeasonalValue =
+      gama * (aggregatedData[i] - currentLevel) +
+      (1 - gama) * previousSeasonalValue;
+
+    seasonalityValues[seasonalIndex] = newSeasonalValue;
   }
 
-  return values[values.length - 1];
+  return {
+    level: currentLevel,
+    trend,
+    seasonalValues: seasonalityValues,
+    rezidua,
+  };
 }
 
 function holtPrediction(
   countOfFutureMonths: number,
-  lastDate: string,
+  lastDate: Date,
   type: "holt" | "holt-winter",
   lastLevelAndTrend?: { level: number; trend: number },
   lastLevelTrendSeasonalVal?: {
@@ -475,8 +445,10 @@ function holtPrediction(
     seasonalValues: number[];
   }
 ): PredictionData {
-  const [year, month] = lastDate.split("-").map(Number);
   let predictionData: PredictionData = [];
+
+  const year = lastDate.getFullYear();
+  const month = lastDate.getMonth();
 
   if (type === "holt" && lastLevelAndTrend) {
     const { level, trend } = lastLevelAndTrend;
@@ -547,6 +519,30 @@ function pickbestPredictionModel(
   return bestModel;
 }
 
+function prepareDataToAlgorithm(data: LoansData): {
+  trainingData: LoansData;
+  testData: LoansData;
+} {
+  const years = [
+    ...data.map(item => {
+      return item.DueDate.getFullYear();
+    }),
+  ].sort((a, b) => a - b);
+
+  const secondToLastYear = years[years.length - 2];
+  const lastYear = years[years.length - 1];
+
+  const trainingData = data.filter(
+    item => item.DueDate.getFullYear() <= secondToLastYear
+  );
+
+  const testData = data.filter(item => item.DueDate.getFullYear() === lastYear);
+
+  return { trainingData, testData };
+}
+
+//jeste rozdeleni do skupin??
+
 export default function providedLoansPrediction():
   | {
       usedData: DataForLoanPrediction;
@@ -556,10 +552,10 @@ export default function providedLoansPrediction():
   | undefined {
   const data: LoansData = prepareLoanData();
 
-  const aggregatedData = aggregateLoansDelayByMonth(data);
+  const { trainingData, testData } = prepareDataToAlgorithm(data);
 
-  const trainingData = aggregatedData.slice(0, 48);
-  const testData = aggregatedData.slice(48, 60);
+  const aggtrainingData = aggregateLoansDelayByMonth(trainingData);
+  const aggtestData = aggregateLoansDelayByMonth(testData);
 
   const aics: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[] =
     [];
@@ -567,11 +563,11 @@ export default function providedLoansPrediction():
   const countOfFutureMonthsToPredict = 6;
 
   // SES
-  const bestAlphaPickedByMAE = pickBestAlphaByMAE(trainingData);
+  const bestAlphaPickedByMAE = pickBestAlphaByMAE(aggtrainingData);
   console.log("bestAlphaPickedByMAE SES " + bestAlphaPickedByMAE);
-  const bestSESparams = pickBestAlphaByAIC(trainingData);
+  const bestSESparams = pickBestAlphaByAIC(aggtrainingData);
   const smoothedDataBySES = exponentialSmoothing(
-    trainingData,
+    aggtrainingData,
     bestSESparams.bestAlpha
   );
 
@@ -579,14 +575,14 @@ export default function providedLoansPrediction():
 
   const predictionSES = sesPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1).toString(),
+    new Date(2025, 11, 1),
     smoothedDataBySES
   );
 
   // Holt
-  const bestHoltParams = pickBestHoltParameters(trainingData);
+  const bestHoltParams = pickBestHoltParameters(aggtrainingData);
   const smoothedDataByHolt = holtExponentialSmoothing(
-    trainingData,
+    aggtrainingData,
     bestHoltParams.bestAlpha,
     bestHoltParams.bestBeta
   );
@@ -595,7 +591,7 @@ export default function providedLoansPrediction():
 
   const predictionHolt = holtPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1).toString(),
+    new Date(2025, 11, 1),
     "holt",
     {
       level: smoothedDataByHolt.level,
@@ -604,9 +600,9 @@ export default function providedLoansPrediction():
   );
 
   // Holt-Winter
-  const bestHoltWinterParams = pickBestHoltWintersParameters(trainingData);
+  const bestHoltWinterParams = pickBestHoltWintersParameters(aggtrainingData);
   const smoothedDataByHoltWinter = holtWintersExponentialSmoothing(
-    trainingData,
+    aggtrainingData,
     bestHoltWinterParams.bestAlpha,
     bestHoltWinterParams.bestBeta,
     bestHoltWinterParams.bestGama
@@ -616,7 +612,7 @@ export default function providedLoansPrediction():
 
   const predictionHoltWinter = holtPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1).toString(),
+    new Date(2025, 11, 1),
     "holt-winter",
     undefined,
     {
@@ -679,8 +675,8 @@ export default function providedLoansPrediction():
 
   const savedUsedData = new UsedDataLoans(
     data,
-    trainingData,
-    testData,
+    aggtrainingData,
+    aggtestData,
     aics,
     algorithmParams,
     predictionsData
@@ -711,7 +707,7 @@ export default function providedLoansPrediction():
       return {
         usedData,
         confidenceIntervals,
-        statistics: createStatitics(testData, confidenceIntervals),
+        statistics: createStatitics(aggtestData, confidenceIntervals),
       };
     case "holt-winter":
       confidenceIntervals = computeConfidenceIntervals(
@@ -722,7 +718,7 @@ export default function providedLoansPrediction():
       return {
         usedData,
         confidenceIntervals,
-        statistics: createStatitics(testData, confidenceIntervals),
+        statistics: createStatitics(aggtestData, confidenceIntervals),
       };
     case "ses":
       confidenceIntervals = computeConfidenceIntervals(
@@ -733,7 +729,7 @@ export default function providedLoansPrediction():
       return {
         usedData,
         confidenceIntervals,
-        statistics: createStatitics(testData, confidenceIntervals),
+        statistics: createStatitics(aggtestData, confidenceIntervals),
       };
     default:
       console.error("Uknown model " + `${bestModel}`);
