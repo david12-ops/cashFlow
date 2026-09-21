@@ -10,7 +10,22 @@ export function createStatitics(
   // sum for average of the signed relative error
   let sumForRelativeError = 0;
 
-  for (let i = 0; i < testData.length; i++) {
+  // console.log("testData:", testData);
+  // console.log("testData length:", testData.length);
+
+  // predictedData.forEach((item, index) => {
+  //   console.log(`predictedData[${index}]:`);
+  //   console.log("date:", item.date);
+  //   console.log("lowerBound:", item.lowerBound);
+  //   console.log("prediction:", item.prediction);
+  //   console.log("upperBound:", item.upperBound);
+  // });
+
+  const countForRelativeError = testData.filter(value => value !== 0).length;
+
+  const count = Math.min(testData.length, predictedData.length);
+
+  for (let i = 0; i < count; i++) {
     sumForMae += Math.abs(testData[i] - predictedData[i].prediction);
     sumForRMSE += Math.pow(testData[i] - predictedData[i].prediction, 2);
 
@@ -25,21 +40,15 @@ export function createStatitics(
 
   const mae = (1 / testData.length) * sumForMae;
   const rmse = Math.sqrt((1 / testData.length) * sumForRMSE);
-  const mape = (100 / testData.length) * sumForMape;
+  const mape =
+    countForRelativeError > 0
+      ? (100 / countForRelativeError) * sumForMape
+      : null;
   // average of the signed relative error
-  const relativeError = (1 / testData.length) * sumForRelativeError * 100;
-
-  if (testData.some(value => value === 0)) {
-    console.warn(
-      "Test data contains zero values. MAPE and relative error cannot be calculated for these values."
-    );
-    return {
-      valueMAE: mae,
-      valueMAPE: null,
-      valueRMSE: rmse,
-      relativeErrorAvg: null,
-    };
-  }
+  const relativeError =
+    countForRelativeError > 0
+      ? (1 / countForRelativeError) * sumForRelativeError * 100
+      : null;
 
   return {
     valueMAE: mae,
@@ -55,6 +64,9 @@ export function computeConfidenceIntervals(
   prediction: { date: string; value: number }[]
 ): IntervalData {
   const data: IntervalData = [];
+  // console.log("--------------------------------------");
+  // console.log("rezidua " + JSON.stringify(rezidua));
+  // console.log("rezidua length:", rezidua.length);
 
   const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
   const meanOfRezidua = sumOfRezidua / rezidua.length;
@@ -64,6 +76,10 @@ export function computeConfidenceIntervals(
   for (let i = 0; i < rezidua.length; i++) {
     sumSquaredDeviations += Math.pow(rezidua[i] - meanOfRezidua, 2);
   }
+
+  // console.log("sumOfRezidua:", sumOfRezidua);
+  // console.log("meanOfRezidua:", meanOfRezidua);
+  // console.log("sumSquaredDeviations:", sumSquaredDeviations);
 
   for (let i = 0; i < prediction.length; i++) {
     const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);

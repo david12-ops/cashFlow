@@ -184,20 +184,16 @@ function exponentialSmoothing(
   const smoothedValues: number[] = [];
   const rezidua: number[] = [];
 
-  let currentVal;
-
   for (let i = 0; i < data.length; i++) {
     if (i === 0) {
-      currentVal = data[0];
-      smoothedValues[i] = currentVal;
+      smoothedValues[i] = data[i];
     } else {
-      rezidua[i] = data[i] - smoothedValues[i - 1];
+      const previousSmoothValue = smoothedValues[i - 1];
 
-      currentVal = data[i];
-      const previousSmoothVal = smoothedValues[i - 1];
+      rezidua.push(data[i] - previousSmoothValue);
 
       const newSmoothValue =
-        alpha * currentVal + (1 - alpha) * previousSmoothVal;
+        alpha * data[i] + (1 - alpha) * previousSmoothValue;
       smoothedValues[i] = newSmoothValue;
     }
   }
@@ -207,12 +203,14 @@ function exponentialSmoothing(
 
 function sesPrediction(
   countOfFutureMonths: number,
-  lastDate: string,
+  lastDate: Date,
   sesData: { smoothedValues: number[]; rezidua: number[] }
 ): PredictionData {
-  const [year, month] = lastDate.split("-").map(Number);
-
   const predictionData: PredictionData = [];
+
+  const year = lastDate.getFullYear();
+  const month = lastDate.getMonth();
+
   const lastSmoothedValue =
     sesData.smoothedValues[sesData.smoothedValues.length - 1];
 
@@ -228,34 +226,87 @@ function sesPrediction(
   return predictionData;
 }
 
+function prepareDataToAlgorithm(data: InvoicesData): {
+  trainingData: InvoicesData;
+  testData: InvoicesData;
+} {
+  const years = [
+    ...data.map(item => {
+      return item.DueDate.getFullYear();
+    }),
+  ].sort((a, b) => a - b);
+
+  const secondToLastYear = years[years.length - 2];
+  const lastYear = years[years.length - 1];
+
+  const trainingData = data.filter(
+    item => item.DueDate.getFullYear() <= secondToLastYear
+  );
+
+  const testData = data.filter(item => item.DueDate.getFullYear() === lastYear);
+
+  return { trainingData, testData };
+}
+
+//Check jako hoodne
 export default function issuedInvoicesPrediction(): {
   usedData: DataForInvoicePrediction;
   confidenceIntervals: IntervalData;
   statistics: Statistics;
 } {
-  const data: InvoicesData = prepareInvoiceData();
+  let data: InvoicesData = prepareInvoiceData();
 
   const excludetData = excludeOutliers(data);
 
-  const aggregatedData = aggregateInvoicesPaymentDelayByMonth(excludetData);
+  data = excludeOutliers(data);
 
-  const trainingData = aggregatedData.slice(0, 48);
-  const testData = aggregatedData.slice(48, 60);
+  const { trainingData, testData } = prepareDataToAlgorithm(data);
+
+  const aggtrainingData = aggregateInvoicesPaymentDelayByMonth(trainingData);
+  const aggtestData = aggregateInvoicesPaymentDelayByMonth(testData);
 
   const countOfFutureMonthsToPredict = 6;
 
   // SES
-  const bestSESparams = pickBestAlphaByAIC(trainingData);
+  const bestSESparams = pickBestAlphaByAIC(aggtrainingData);
   const smoothedDataBySES = exponentialSmoothing(
-    trainingData,
+    aggtrainingData,
     bestSESparams.bestAlpha
   );
 
   const predictionSES = sesPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1).toString(),
+    new Date(2025, 11, 1),
     smoothedDataBySES
   );
+
+  // console.log(
+  //   "---------------------------------------------------------------"
+  // );
+  // console.log("Původní data:", data);
+  // console.log("Délka původních dat:", data.length);
+
+  // console.log("Data po odstranění odlehlých hodnot:", excludetData);
+  // console.log("Délka dat po odstranění odlehlých hodnot:", excludetData.length);
+  // console.log(
+  //   "trainig data a delka " + trainingData + " " + trainingData.length
+  // );
+  // console.log(
+  //   "smoothedDataBySES ve funkci smoothedValues a delka " +
+  //     smoothedDataBySES.smoothedValues +
+  //     " " +
+  //     smoothedDataBySES.smoothedValues.length
+  // );
+  // console.log(
+  //   "smoothedDataBySES ve funkci rezidua a delka " +
+  //     smoothedDataBySES.rezidua +
+  //     " " +
+  //     smoothedDataBySES.rezidua.length
+  // );
+
+  // predictionSES.forEach(item => {
+  //   console.log(item);
+  // });
 
   const confidenceIntervals = computeConfidenceIntervals(
     smoothedDataBySES.rezidua,
@@ -265,8 +316,8 @@ export default function issuedInvoicesPrediction(): {
   const savedUsedData = new UsedDataInvoices(
     data,
     excludetData,
-    trainingData,
-    testData,
+    aggtrainingData,
+    aggtestData,
     {
       alpha: bestSESparams.bestAlpha,
       aic: bestSESparams.bestAic,
@@ -295,6 +346,6 @@ export default function issuedInvoicesPrediction(): {
   return {
     usedData,
     confidenceIntervals,
-    statistics: createStatitics(testData, confidenceIntervals),
+    statistics: createStatitics(aggtestData, confidenceIntervals),
   };
 }

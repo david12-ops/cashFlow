@@ -227,7 +227,7 @@ function getMonths(
         return (
           monthData.length <
           getDaysInMonths(
-            new Date(monthData[Math.round(monthData.length / 2)].Date_val)
+            new Date(monthData[Math.floor(monthData.length / 2)].Date_val)
           )
         );
     })[0];
@@ -237,7 +237,7 @@ function getMonths(
         return (
           monthData.length ===
           getDaysInMonths(
-            new Date(monthData[Math.round(monthData.length / 2)].Date_val)
+            new Date(monthData[Math.floor(monthData.length / 2)].Date_val)
           )
         );
     });
@@ -404,27 +404,28 @@ function prepareTestingData(
 
   const newData = prepareDPHData(daysOfAciveMonth, "MONTHLY");
 
-  const [key, values] = Object.entries(newData)[0];
-
-  console.log(key);
-  console.log(values);
-
   const newMonth: DphData = {};
 
   newMonth[keyDate] = [];
 
-  values.forEach(itm => {
+  const newDates: Date[] = [...activeMonth.map(item => item.Date_val)];
+
+  for (let i = newDates.length; i < daysOfAciveMonth; i++) {
+    newDates[i] = new Date(
+      activeDateInActiveMonth.getFullYear(),
+      activeDateInActiveMonth.getMonth(),
+      i + 1
+    );
+  }
+
+  Object.values(newData)[0].forEach((itm, index) => {
     newMonth[keyDate].push({
       ...itm,
-      Date_val: new Date(
-        itm.Date_val.getFullYear(),
-        itm.Date_val.getMonth() + 1,
-        itm.Date_val.getDate()
-      ),
+      Date_val: newDates[index],
     });
   });
 
-  return { key, data: newMonth };
+  return { key: keyDate, data: newMonth };
 }
 
 function monthlyDPHPrediction():
@@ -447,12 +448,51 @@ function monthlyDPHPrediction():
   const testData = prepareTestingData(data);
 
   if (testData && testData.data !== null) {
+    // console.log("keyDate " + testData.key);
+    // Object.entries(testData.data).forEach(([key, values]) => {
+    //   console.log(`=== ${key} ===`);
+
+    //   values.forEach((item, index) => {
+    //     console.log(`[${index}]`, {
+    //       Date_val: item.Date_val,
+    //       Dph_val: item.Dph_val,
+    //     });
+    //   });
+    // });
+
     data = {
       ...Object.fromEntries(Object.entries(data).slice(0, -1)),
       ...testData.data,
     };
 
-    const trainingData = Object.fromEntries(Object.entries(data).slice(0, 124));
+    const trainingData = Object.fromEntries(Object.entries(data).slice(0, -1));
+
+    console.log("--------------------------------------------------------");
+    console.log("training");
+    Object.entries(trainingData).forEach(([key, values]) => {
+      console.log(`=== ${key} ===`);
+
+      values.forEach((item, index) => {
+        console.log(`[${index}]`, {
+          Date_val: item.Date_val,
+          Dph_val: item.Dph_val,
+        });
+      });
+    });
+
+    console.log("--------------------------------------------------------");
+    console.log("test");
+    Object.entries(testData.data).forEach(([key, values]) => {
+      console.log(`=== ${key} ===`);
+
+      values.forEach((item, index) => {
+        console.log(`[${index}]`, {
+          Date_val: item.Date_val,
+          Dph_val: item.Dph_val,
+        });
+      });
+    });
+    console.log("--------------------------------------------------------");
 
     const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
       aggregateMonthlyDPHvaluesbyDay(data);
