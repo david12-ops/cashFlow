@@ -256,7 +256,7 @@ function convertBaseAmountToOneCurrency(
 
     return {
       ...item,
-      BaseAmount: convertValueByCurrency(
+      baseAmount: convertValueByCurrency(
         item.currency,
         currency,
         item.baseAmount,
@@ -679,7 +679,9 @@ function aggregateDataByMonth(data: WagesData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
   data.forEach(item => {
-    const key = `${item.transactionDate.getFullYear()} - ${item.transactionDate.getMonth()}`;
+    const key = `${item.transactionDate.getFullYear()}-${String(
+      item.transactionDate.getMonth() + 1
+    ).padStart(2, "0")}`;
 
     if (!monthlyValues.has(key)) {
       monthlyValues.set(key, []);
@@ -705,13 +707,21 @@ function randomWalkWithDrift(
   const predictionDate = new Date(maxDate);
   predictionDate.setMonth(predictionDate.getMonth() + 1);
 
+  // CHECK
   if (monthlyValues.length === 1) {
-    return [
-      {
+    const predictions: PredictionData = [];
+    const predictionDate = new Date(maxDate);
+
+    for (let i = 0; i < countOfFutureMonthsToPredict; i++) {
+      predictionDate.setMonth(predictionDate.getMonth() + 1);
+
+      predictions.push({
         date: `${predictionDate.getFullYear()}-${predictionDate.getMonth() + 1}`,
         value: monthlyValues[0],
-      },
-    ];
+      });
+    }
+
+    return predictions;
   }
 
   let sumChanges = 0;
@@ -797,15 +807,40 @@ function filterDataByPercentil(data: WagesData): WagesData {
 // At the moment when there will be another feature, for example payment delay
 // function standardizeData() {}
 
+function prepareDataToAlgorithm(data: WagesData): {
+  trainingData: WagesData;
+  testData: WagesData;
+} {
+  const years = [
+    ...data.map(item => {
+      return item.transactionDate.getFullYear();
+    }),
+  ].sort((a, b) => a - b);
+
+  const secondToLastYear = years[years.length - 2];
+  const lastYear = years[years.length - 1];
+
+  const trainingData = data.filter(
+    item => item.transactionDate.getFullYear() <= secondToLastYear
+  );
+
+  const testData = data.filter(
+    item => item.transactionDate.getFullYear() === lastYear
+  );
+
+  return { trainingData, testData };
+}
+
 export default function wageCostsPrediction(): {
   usedData: DataForWagePrediction;
   confidenceIntervals: IntervalData;
   statistics: Statistics;
 } {
-  const data: WagesData = prepareWageCostData();
+  let data: WagesData = prepareWageCostData();
 
-  const trainingData = filterDataByPercentil(data.slice(0, 48));
-  const testData = data.slice(48, 60);
+  data = filterDataByPercentil(data);
+
+  const { trainingData, testData } = prepareDataToAlgorithm(data);
 
   const countOfFutureMonthsToPredict = 12;
 
@@ -823,7 +858,7 @@ export default function wageCostsPrediction(): {
 
   oldCentroids = selectedCentroids;
 
-  // for visualization
+  // For visualization
   const iterationsKmeansData: IterationsKmeansData = [];
 
   while (continueAlg) {
@@ -892,9 +927,16 @@ export default function wageCostsPrediction(): {
   const aggregatedTrainingData = aggregateDataByMonth(trainingData);
   const aggregatedTestData = aggregateDataByMonth(testData);
 
-  const rezidua = aggregatedTestData.map(
-    (item, index) => item - summedPredictions[index].value
-  );
+  const rezidua = aggregatedTestData.map((item, index) => {
+    const prediction = summedPredictions[index].value;
+    const residual = item - prediction;
+
+    console.log(
+      `Index ${index}: actual=${item}, prediction=${prediction}, residual=${residual}`
+    );
+
+    return residual;
+  });
 
   const confidenceIntervals = computeConfidenceIntervals(
     rezidua,
