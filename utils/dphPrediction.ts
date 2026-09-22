@@ -39,7 +39,7 @@ function prepareDPHData(
         },
         date
       );
-      monthDaysInOneYear[keyDate].push({ Date_val: date, Dph_val: dph_val });
+      monthDaysInOneYear[keyDate].push({ date_val: date, dph_val: dph_val });
     }
 
     return monthDaysInOneYear;
@@ -83,8 +83,8 @@ function prepareDPHData(
             date
           );
           monthDaysAcrossPastYears[keyDate].push({
-            Date_val: date,
-            Dph_val: dph_val,
+            date_val: date,
+            dph_val: dph_val,
           });
         }
       }
@@ -176,9 +176,9 @@ function getLastKey(data: DphData): string | undefined {
 
     if (
       data[monthKey] &&
-      getDaysInMonths(new Date(data[monthKey][0].Date_val)) != 0 &&
+      getDaysInMonths(new Date(data[monthKey][0].date_val)) != 0 &&
       data[monthKey].length ===
-        getDaysInMonths(new Date(data[monthKey][0].Date_val))
+        getDaysInMonths(new Date(data[monthKey][0].date_val))
     ) {
       lastClosedMonthKey = monthKey;
       closed = true;
@@ -227,7 +227,7 @@ function getMonths(
         return (
           monthData.length <
           getDaysInMonths(
-            new Date(monthData[Math.floor(monthData.length / 2)].Date_val)
+            new Date(monthData[Math.floor(monthData.length / 2)].date_val)
           )
         );
     })[0];
@@ -237,7 +237,7 @@ function getMonths(
         return (
           monthData.length ===
           getDaysInMonths(
-            new Date(monthData[Math.floor(monthData.length / 2)].Date_val)
+            new Date(monthData[Math.floor(monthData.length / 2)].date_val)
           )
         );
     });
@@ -257,7 +257,7 @@ function normalizedInPercent(
   const dataInPercent = averageDaysData.map(day => {
     return {
       ...day,
-      Dph_val: ((day.Dph_val ?? 0) / sumOfAveragedph) * 100,
+      dph_val: ((day.dph_val ?? 0) / sumOfAveragedph) * 100,
     };
   });
 
@@ -280,21 +280,21 @@ function aggregateClosedMonthsDPHvaluesbyDay(
   for (let day = 0; day < maxDays; day++) {
     const days = closedMonths
       .map(month => month[day])
-      .filter(value => value?.Dph_val != null && value.Date_val != null);
+      .filter(value => value?.dph_val != null && value.date_val != null);
 
     if (days.length === 0) continue;
 
-    const sumOfDays = days.reduce((sum, day) => sum + (day.Dph_val ?? 0), 0);
+    const sumOfDays = days.reduce((sum, day) => sum + (day.dph_val ?? 0), 0);
 
     const averageDphDay = sumOfDays / days.length;
 
     aggregatedData.push({
-      Date_val: new Date(
-        days[days.length - 1].Date_val.getFullYear(),
-        days[days.length - 1].Date_val.getMonth() + 1,
-        days[days.length - 1].Date_val.getDate()
+      date_val: new Date(
+        days[days.length - 1].date_val.getFullYear(),
+        days[days.length - 1].date_val.getMonth() + 1,
+        days[days.length - 1].date_val.getDate()
       ),
-      Dph_val: averageDphDay,
+      dph_val: averageDphDay,
     });
   }
 
@@ -311,7 +311,7 @@ function redistributeExtraDays(
 
   // Percentages on distribution
   const percentageToRedistribute = extraHistoricalDays.reduce(
-    (sum, day) => sum + day.Dph_val,
+    (sum, day) => sum + day.dph_val,
     0
   );
 
@@ -332,7 +332,7 @@ function redistributeExtraDays(
     .map(day => {
       return {
         ...day,
-        Dph_val: day.Dph_val + percentagePerRemainingDay,
+        dph_val: day.dph_val + percentagePerRemainingDay,
       };
     });
 
@@ -361,7 +361,7 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
     };
 
   const sumOfdphInActiveMonth = activeMonth.reduce(
-    (sum, val) => (sum += val.Dph_val),
+    (sum, val) => (sum += val.dph_val),
     0
   );
 
@@ -370,9 +370,9 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
 
   const normalizedsInPercent = normalizedInPercent(
     aggregatedClosedMonth,
-    aggregatedClosedMonth.reduce((sum, day) => sum + (day.Dph_val ?? 0), 0),
+    aggregatedClosedMonth.reduce((sum, day) => sum + (day.dph_val ?? 0), 0),
     activeMonth.length,
-    getDaysInMonths(activeMonth[0].Date_val)
+    getDaysInMonths(activeMonth[0].date_val)
   );
 
   return {
@@ -383,9 +383,10 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
 }
 
 function prepareTestingData(
-  data: DphData
+  lastMonthData: MonthData,
+  lastKey: string
 ): { key: string; data: DphData } | null {
-  const activeMonth = getMonths(data, "MONTHLY", "ACTIVE") as MonthData;
+  const activeMonth = lastMonthData;
 
   if (!activeMonth || activeMonth.length === 0) {
     console.warn(
@@ -394,36 +395,47 @@ function prepareTestingData(
     return null;
   }
 
-  const activeDateInActiveMonth = activeMonth![0].Date_val;
-  const keyDate =
-    activeDateInActiveMonth.getFullYear() +
-    "-" +
-    activeDateInActiveMonth.getMonth();
+  const activeDateInActiveMonth = activeMonth![0].date_val;
+  const keyDate = lastKey;
 
-  const daysOfAciveMonth = getDaysInMonths(activeDateInActiveMonth);
+  const daysOfActiveMonth = getDaysInMonths(activeDateInActiveMonth);
 
-  const newData = prepareDPHData(daysOfAciveMonth, "MONTHLY");
+  const newData = prepareDPHData(daysOfActiveMonth, "MONTHLY");
+
+  const generatedValues = Object.values(newData)[0];
 
   const newMonth: DphData = {};
 
-  newMonth[keyDate] = [];
+  newMonth[keyDate] = [...activeMonth];
 
-  const newDates: Date[] = [...activeMonth.map(item => item.Date_val)];
+  // const newDates: Date[] = [...activeMonth.map(item => item.date_val)];
 
-  for (let i = newDates.length; i < daysOfAciveMonth; i++) {
-    newDates[i] = new Date(
-      activeDateInActiveMonth.getFullYear(),
-      activeDateInActiveMonth.getMonth(),
-      i + 1
-    );
-  }
+  // for (let i = newDates.length; i < daysOfAciveMonth; i++) {
+  //   newDates[i] = new Date(
+  //     activeDateInActiveMonth.getFullYear(),
+  //     activeDateInActiveMonth.getMonth(),
+  //     i + 1
+  //   );
+  // }
 
-  Object.values(newData)[0].forEach((itm, index) => {
+  // Object.values(newData)[0].forEach((itm, index) => {
+  //   newMonth[keyDate].push({
+  //     ...itm,
+  //     date_val: newDates[index],
+  //   });
+  // });
+
+  // Od 2. dne použijeme vygenerované hodnoty
+  for (let i = activeMonth.length; i < daysOfActiveMonth; i++) {
     newMonth[keyDate].push({
-      ...itm,
-      Date_val: newDates[index],
+      ...generatedValues[i - activeMonth.length],
+      date_val: new Date(
+        activeDateInActiveMonth.getFullYear(),
+        activeDateInActiveMonth.getMonth(),
+        i + 1
+      ),
     });
-  });
+  }
 
   return { key: keyDate, data: newMonth };
 }
@@ -435,7 +447,7 @@ function monthlyDPHPrediction():
       statistics: Statistics;
     }
   | undefined {
-  let data = prepareDPHData(124, "MONTHLY");
+  const data = prepareDPHData(124, "MONTHLY");
 
   if (Object.values(data).some(days => days.length === 0)) {
     console.warn(
@@ -444,28 +456,54 @@ function monthlyDPHPrediction():
     return undefined;
   }
 
+  Object.entries(data).forEach(([key, values]) => {
+    console.log(`=== ${key} ===`);
+
+    values.forEach((item, index) => {
+      console.log(`[${index}]`, {
+        date_val: item.date_val.toLocaleString("cs-CZ"),
+        dph_val: item.dph_val,
+      });
+    });
+  });
+
+  //     const firstPartValues: DphData = Object.fromEntries(
+  //   Object.entries(data).filter(([key]) => key !== testData.key)
+  // );
+
+  const keysOfData = Object.keys(data);
+
+  console.log("keysData " + keysOfData);
+
+  const firstPartValues: DphData = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== keysOfData[keysOfData.length - 1]) {
+      firstPartValues[key] = [];
+
+      firstPartValues[key] = value;
+    }
+  });
+
+  // Last month will be the test data
+  const lastKey = keysOfData[keysOfData.length - 1];
+  const testData = data[lastKey];
+
+  console.log("testData.length " + testData.length);
+  testData.forEach(item => {
+    console.log("dph date " + item.date_val.toLocaleString("cs-CZ"));
+    console.log("dph val " + item.dph_val);
+  });
+
   // Its for testing data, we need to prepare the last active month, and then change the days
-  const testData = prepareTestingData(data);
+  const preparedTestData = prepareTestingData(testData, lastKey);
 
-  if (testData && testData.data !== null) {
-    // console.log("keyDate " + testData.key);
-    // Object.entries(testData.data).forEach(([key, values]) => {
-    //   console.log(`=== ${key} ===`);
-
-    //   values.forEach((item, index) => {
-    //     console.log(`[${index}]`, {
-    //       Date_val: item.Date_val,
-    //       Dph_val: item.Dph_val,
-    //     });
-    //   });
-    // });
-
-    data = {
-      ...Object.fromEntries(Object.entries(data).slice(0, -1)),
-      ...testData.data,
-    };
-
-    const trainingData = Object.fromEntries(Object.entries(data).slice(0, -1));
+  if (
+    preparedTestData &&
+    preparedTestData.data !== null &&
+    preparedTestData.key
+  ) {
+    const trainingData = firstPartValues;
 
     console.log("--------------------------------------------------------");
     console.log("training");
@@ -474,22 +512,20 @@ function monthlyDPHPrediction():
 
       values.forEach((item, index) => {
         console.log(`[${index}]`, {
-          Date_val: item.Date_val,
-          Dph_val: item.Dph_val,
+          date_val: item.date_val.toLocaleString("cs-CZ"),
+          dph_val: item.dph_val,
         });
       });
     });
 
     console.log("--------------------------------------------------------");
     console.log("test");
-    Object.entries(testData.data).forEach(([key, values]) => {
-      console.log(`=== ${key} ===`);
+    Object.values(preparedTestData.data[preparedTestData.key]).forEach(item => {
+      console.log(`=== ${preparedTestData.key} ===`);
 
-      values.forEach((item, index) => {
-        console.log(`[${index}]`, {
-          Date_val: item.Date_val,
-          Dph_val: item.Dph_val,
-        });
+      console.log(`[${preparedTestData.key}]`, {
+        date_val: item.date_val.toLocaleString("cs-CZ"),
+        dph_val: item.dph_val,
       });
     });
     console.log("--------------------------------------------------------");
@@ -499,7 +535,7 @@ function monthlyDPHPrediction():
 
     const historySumPercentage = aggMonthNumbersInPercent
       .slice(0, activeMonth.length)
-      .reduce((sum, val) => (sum += val.Dph_val ?? 0), 0);
+      .reduce((sum, val) => (sum += val.dph_val ?? 0), 0);
 
     if (historySumPercentage <= 0 || sumOfActiveMonth <= 0) {
       console.warn(
@@ -512,13 +548,13 @@ function monthlyDPHPrediction():
 
     const predictedData = aggMonthNumbersInPercent.map(item => {
       return {
-        date: `${item.Date_val.getFullYear()}-${String(item.Date_val.getMonth() + 1).padStart(2, "0")}-${String(item.Date_val.getDate()).padStart(2, "0")}`,
-        value: (predictedDph / 100) * item.Dph_val,
+        date: `${item.date_val.getFullYear()}-${String(item.date_val.getMonth() + 1).padStart(2, "0")}-${String(item.date_val.getDate()).padStart(2, "0")}`,
+        value: (predictedDph / 100) * item.dph_val,
       };
     });
 
-    const rezidua = testData.data[testData.key].map(
-      (item, index) => item.Dph_val - predictedData[index].value
+    const rezidua = preparedTestData.data[preparedTestData.key].map(
+      (item, index) => item.dph_val - predictedData[index].value
     );
 
     const confidenceIntervals = computeConfidenceIntervals(
@@ -529,7 +565,7 @@ function monthlyDPHPrediction():
     const savedUsedData = new UsedDPHdata(
       data,
       trainingData,
-      testData,
+      preparedTestData,
       aggMonthNumbersInPercent,
       activeMonth,
       predictedDph
@@ -547,8 +583,8 @@ function monthlyDPHPrediction():
       usedData,
       confidenceIntervals,
       statistics: createStatitics(
-        testData.data[testData.key].map(item => {
-          return item.Dph_val;
+        preparedTestData.data[preparedTestData.key].map(item => {
+          return item.dph_val;
         }),
         confidenceIntervals
       ),

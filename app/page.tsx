@@ -1,10 +1,7 @@
 import { createClient } from "@/supabase/server";
+import { Box, Heading, Text, List, Link, HStack } from "@chakra-ui/react";
 import { cookies } from "next/headers";
-import dphPrediction from "@/utils/dphPrediction";
-import wageCostsPrediction from "@/utils/wageCostsPrediction";
-import providedLoansPrediction from "@/utils/providedLoansPrediction";
-import issuedInvoicesPrediction from "@/utils/issuedInvoicesPrediction";
-import { ChartComp } from "@/components/chartComp";
+import { Receipt, Banknote, Landmark, FileText, ChartLine } from "lucide-react";
 
 export default async function Page() {
   const cookieStore = cookies();
@@ -13,201 +10,74 @@ export default async function Page() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: todos } = await supabase.from("todos").select();
 
-  const monthlyDPHPredNumber = dphPrediction();
-  // const wagePrediction = wageCostsPrediction(); // OK
-  //const loanDelayPrediction = providedLoansPrediction(); // zatim ok
-  //const invoicePaymentDelayPrediction = issuedInvoicesPrediction();
-
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+    <Box
+      margin={25}
+      display="flex"
+      flexDirection="column"
+      justifyContent="space-between"
+      minH="calc(60vh - 50px)"
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
-          <h1 style={{ textAlign: "center" }}>Monthly (DPH)</h1>
-          {/* {monthlyDPHPredNumber && (
-            <ChartComp
-              usedData={monthlyDPHPredNumber.usedData}
-              confidenceIntervals={monthlyDPHPredNumber.confidenceIntervals}
-              statistics={monthlyDPHPredNumber.statistics}
-            />
-          )} */}
-          {monthlyDPHPredNumber &&
-            monthlyDPHPredNumber.confidenceIntervals.map((item, index) => (
-              <div key={index} style={{ marginBottom: "20px" }}>
-                <p>Date: {item.date}</p>
-                <p>Lower Bound: {item.lowerBound}</p>
-                <p>Prediction: {item.prediction}</p>
-                <p>Upper Bound: {item.upperBound}</p>
-              </div>
-            ))}
-          <div style={{ paddingTop: "20px" }}>
-            <h1>Statistics</h1>
+      <Box>
+        <Heading as="h1" size="lg" mb={3}>
+          Vítejte v aplikaci pro predikci finančních toků
+        </Heading>
 
-            {monthlyDPHPredNumber &&
-              [
-                {
-                  name: "MAE",
-                  value: monthlyDPHPredNumber.statistics.valueMAE,
-                },
-                {
-                  name: "RMSE",
-                  value: monthlyDPHPredNumber.statistics.valueRMSE,
-                },
-                {
-                  name: "MAPE",
-                  value: monthlyDPHPredNumber.statistics.valueMAPE,
-                },
-                {
-                  name: "Průměrná relativní chyba",
-                  value: monthlyDPHPredNumber.statistics.relativeErrorAvg,
-                },
-              ].map(item => (
-                <div key={item.name}>
-                  <span>
-                    {item.name}: {item.value ?? "-"}
-                  </span>
-                </div>
-              ))}
-          </div>
-        </div>
+        <Text>
+          Tato aplikace slouží k analýze historických finančních dat a predikci
+          jejich budoucího vývoje. Pomocí vybraných predikčních metod lze
+          pracovat s jednotlivými oblastmi finančních toků, například s DPH,
+          mzdami, úvěry nebo fakturami. Pro zahájení analýzy vyberte jednu z
+          dostupných oblastí.
+        </Text>
+      </Box>
 
-        {/* <div>
-          <h1 style={{ textAlign: "center" }}>Wage prediction</h1>
+      <Box>
+        <Heading as="h2" size="lg" mb={3}>
+          Oblasti peněžních toků
+        </Heading>
 
-          {wagePrediction.confidenceIntervals.map((item, index) => (
-            <div key={index} style={{ marginBottom: "20px" }}>
-              <p>Date: {item.date}</p>
-              <p>Lower Bound: {item.lowerBound}</p>
-              <p>Prediction: {item.prediction}</p>
-              <p>Upper Bound: {item.upperBound}</p>
-            </div>
-          ))}
+        <List.Root listStyle="none">
+          <List.Item>
+            <Link href="/dph">
+              <HStack gap={2}>
+                <Receipt /> DPH
+              </HStack>
+            </Link>
+          </List.Item>
 
-          <div style={{ paddingTop: "20px" }}>
-            <h1>Statistics</h1>
+          <List.Item>
+            <Link href="/wages">
+              <HStack gap={2}>
+                <Banknote /> Mzdy
+              </HStack>
+            </Link>
+          </List.Item>
 
-            {[
-              {
-                name: "MAE",
-                value: wagePrediction.statistics.valueMAE,
-              },
-              {
-                name: "RMSE",
-                value: wagePrediction.statistics.valueRMSE,
-              },
-              {
-                name: "MAPE",
-                value: wagePrediction.statistics.valueMAPE,
-              },
-              {
-                name: "Průměrná relativní chyba",
-                value: wagePrediction.statistics.relativeErrorAvg,
-              },
-            ].map(item => (
-              <div key={item.name}>
-                <span>
-                  {item.name}: {item.value ?? "-"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div> */}
-        {/* <div>
-          <h1 style={{ textAlign: "center" }}>Loans delay prediction</h1>
-          {loanDelayPrediction &&
-            loanDelayPrediction.confidenceIntervals.map((item, index) => (
-              <div key={index} style={{ marginBottom: "20px" }}>
-                <p>Date: {item.date}</p>
-                <p>Lower Bound: {item.lowerBound}</p>
-                <p>Prediction: {item.prediction}</p>
-                <p>Upper Bound: {item.upperBound}</p>
-              </div>
-            ))}
-          <div style={{ paddingTop: "20px" }}>
-            <h1>Statistics</h1>
-            {loanDelayPrediction &&
-              [
-                {
-                  name: "MAE",
-                  value: loanDelayPrediction.statistics.valueMAE,
-                },
-                {
-                  name: "RMSE",
-                  value: loanDelayPrediction.statistics.valueRMSE,
-                },
-                {
-                  name: "MAPE",
-                  value: loanDelayPrediction.statistics.valueMAPE,
-                },
-                {
-                  name: "Průměrná relativní chyba",
-                  value: loanDelayPrediction.statistics.relativeErrorAvg,
-                },
-              ].map(item => (
-                <div key={item.name}>
-                  <span>
-                    {item.name}: {item.value ?? "-"}
-                  </span>
-                </div>
-              ))}
-          </div>
-        </div> */}
+          <List.Item>
+            <Link href="/loans">
+              <HStack gap={2}>
+                {" "}
+                <Landmark /> Úvěry
+              </HStack>
+            </Link>
+          </List.Item>
 
-        {/* <div>
-          <h1 style={{ textAlign: "center" }}>
-            Invoices payment delay prediction
-          </h1>
-          {invoicePaymentDelayPrediction.confidenceIntervals.map(
-            (item, index) => (
-              <div key={index} style={{ marginBottom: "20px" }}>
-                <p>Date: {item.date}</p>
-                <p>Lower Bound: {item.lowerBound}</p>
-                <p>Prediction: {item.prediction}</p>
-                <p>Upper Bound: {item.upperBound}</p>
-              </div>
-            )
-          )}
-          <div style={{ paddingTop: "20px" }}>
-            <h1>Statistics</h1>
-            {[
-              {
-                name: "MAE",
-                value: invoicePaymentDelayPrediction.statistics.valueMAE,
-              },
-              {
-                name: "RMSE",
-                value: invoicePaymentDelayPrediction.statistics.valueRMSE,
-              },
-              {
-                name: "MAPE",
-                value: invoicePaymentDelayPrediction.statistics.valueMAPE,
-              },
-              {
-                name: "Průměrná relativní chyba",
-                value:
-                  invoicePaymentDelayPrediction.statistics.relativeErrorAvg,
-              },
-            ].map(item => (
-              <div key={item.name}>
-                <span>
-                  {item.name}: {item.value ?? "-"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div> */}
-      </div>
-    </div>
+          <List.Item>
+            {/* <Link href="/invoices"> */}
+            <HStack gap={2}>
+              <FileText /> Faktury – zatím nedostupné
+            </HStack>
+            {/* </Link> */}
+          </List.Item>
+
+          <List.Item>
+            <HStack gap={2}>
+              <ChartLine /> Provozní cash flow – zatím nedostupné
+            </HStack>
+          </List.Item>
+        </List.Root>
+      </Box>
+    </Box>
   );
 }

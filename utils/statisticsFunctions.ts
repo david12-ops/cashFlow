@@ -54,7 +54,7 @@ export function createStatitics(
     valueMAE: mae,
     valueMAPE: mape,
     valueRMSE: rmse,
-    relativeErrorAvg: relativeError,
+    valueMRE: relativeError,
   };
 }
 

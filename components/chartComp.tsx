@@ -65,10 +65,10 @@ export default function DphPredictionChart({
 
     const actualData = Object.values(usedData.data)
       .flat()
-      .sort((a, b) => a.Date_val.getTime() - b.Date_val.getTime())
+      .sort((a, b) => a.date_val.getTime() - b.date_val.getTime())
       .map(item => ({
-        date: item.Date_val.toISOString(),
-        actual: item.Dph_val,
+        date: item.date_val.toLocaleDateString("cs-CZ"),
+        actual: item.dph_val,
       }));
 
     /* * Confidence intervals už mají formát: * * { * date, * prediction, * lowerBound, * upperBound * } */
@@ -83,7 +83,12 @@ export default function DphPredictionChart({
   }, [usedData.data, confidenceIntervals]);
 
   return (
-    <Card.Root width="100%" height="100%" display="flex" flexDirection="column">
+    <Card.Root
+      width="100%"
+      height="500px"
+      display="flex"
+      flexDirection="column"
+    >
       {" "}
       <CardBody
         px={0}
@@ -120,6 +125,13 @@ export default function DphPredictionChart({
                   ? `${statistics.valueMAPE.toFixed(2)} %`
                   : "-"}{" "}
               </Text>{" "}
+              <Text fontSize="sm">
+                {" "}
+                MRE:{" "}
+                {statistics.valueMRE !== null
+                  ? `${statistics.valueMRE.toFixed(2)} %`
+                  : "-"}{" "}
+              </Text>{" "}
             </Flex>{" "}
           </Flex>{" "}
         </Stack>{" "}
@@ -151,13 +163,14 @@ export default function DphPredictionChart({
                 interval="preserveStartEnd"
               />{" "}
               <YAxis
+                width={110}
                 tickFormatter={value => `${value.toLocaleString("cs-CZ")} Kč`}
                 tick={{ fill: "var(--chakra-colors-fg-medium-contrast)" }}
                 axisLine={false}
                 tickLine={false}
                 tickMargin={16}
                 style={{ fontSize: "12px" }}
-              />{" "}
+              />
               <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ stroke: "var(--chakra-colors-border)" }}
