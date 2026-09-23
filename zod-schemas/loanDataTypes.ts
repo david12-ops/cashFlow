@@ -102,8 +102,8 @@ export const PredictionsDataSchema = z.array(
 
 export const DataForLoanPredictionSchema = z.object({
   data: LoansDataSchema,
-  aggregatedTrainingData: z.array(z.number()),
-  aggregatedTestData: z.array(z.number()),
+  trainingData: LoansDataSchema,
+  testData: LoansDataSchema,
   aics: AicsDataSchema,
   algorithmsParams: AlgorithmsParamsSchema,
   predictionsData: z.object({

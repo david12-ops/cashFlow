@@ -11,10 +11,21 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { DataForDPHprediction, IntervalData, Statistics } from "@/zod-schemas";
+import {
+  DphData,
+  IntervalData,
+  InvoicesData,
+  LoansData,
+  Statistics,
+  WagesData,
+} from "@/zod-schemas";
 
-type DphChartProps = {
-  usedData: DataForDPHprediction;
+type ChartProps = {
+  usedData: {
+    data: DphData | InvoicesData | LoansData | WagesData;
+    type: "invoices" | "loans" | "wages" | "dph";
+  };
+
   confidenceIntervals: IntervalData;
   statistics: Statistics;
 };
@@ -55,21 +66,80 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-export default function DphPredictionChart({
+function getActualDataForChart(usedData: {
+  data: DphData | InvoicesData | LoansData | WagesData;
+  type: "invoices" | "loans" | "wages" | "dph";
+}): ChartData[] | undefined {
+  const { data, type } = usedData;
+
+  switch (type) {
+    case "dph": {
+      const usedDphData = data as DphData;
+
+      return Object.values(usedDphData)
+        .flat()
+        .sort((a, b) => a.date_val.getTime() - b.date_val.getTime())
+        .map(item => ({
+          date: item.date_val.toLocaleDateString("cs-CZ"),
+          actual: item.dph_val,
+        }));
+    }
+    case "invoices": {
+      const usedInvoicesData = data as InvoicesData;
+
+      return Object.values(usedInvoicesData)
+        .flat()
+        .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
+        .map(item => ({
+          date: item.DueDate.toLocaleDateString("cs-CZ"),
+          actual: item.AmountCze,
+        }));
+    }
+    case "loans": {
+      const usedLoansData = data as LoansData;
+
+      return Object.values(usedLoansData)
+        .flat()
+        .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
+        .map(item => ({
+          date: item.DueDate.toLocaleDateString("cs-CZ"),
+          actual: item.Amount,
+        }));
+    }
+    case "wages": {
+      const usedWagesData = data as WagesData;
+      const monthlyValues = new Map<string, number>();
+
+      usedWagesData.forEach(item => {
+        const key = `${item.transactionDate.getFullYear()}-${String(
+          item.transactionDate.getMonth() + 1
+        ).padStart(2, "0")}`;
+
+        monthlyValues.set(key, (monthlyValues.get(key) ?? 0) + item.baseAmount);
+      });
+
+      return Array.from(monthlyValues.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, actual]) => ({
+          date,
+          actual,
+        }));
+    }
+    default: {
+      console.error("Unknown data type");
+      return undefined;
+    }
+  }
+}
+
+export default function PredictionChart({
   usedData,
   confidenceIntervals,
   statistics,
-}: DphChartProps) {
-  const chartData = useMemo<ChartData[]>(() => {
+}: ChartProps) {
+  const chartData = useMemo<ChartData[] | undefined>(() => {
     /* * usedData.data: * * { * "2024": [...], * "2025": [...], * "2026": [...] * } * * Proto jednotlivé roky spojíme do jednoho pole. */
-
-    const actualData = Object.values(usedData.data)
-      .flat()
-      .sort((a, b) => a.date_val.getTime() - b.date_val.getTime())
-      .map(item => ({
-        date: item.date_val.toLocaleDateString("cs-CZ"),
-        actual: item.dph_val,
-      }));
+    const actualData = getActualDataForChart(usedData);
 
     /* * Confidence intervals už mají formát: * * { * date, * prediction, * lowerBound, * upperBound * } */
     const predictionData = confidenceIntervals.map(item => ({
@@ -79,8 +149,10 @@ export default function DphPredictionChart({
       upperBound: item.upperBound,
     }));
 
-    return [...actualData, ...predictionData];
-  }, [usedData.data, confidenceIntervals]);
+    if (!actualData) {
+      return undefined;
+    } else return [...actualData, ...predictionData];
+  }, [usedData, confidenceIntervals]);
 
   return (
     <Card.Root
@@ -164,7 +236,13 @@ export default function DphPredictionChart({
               />{" "}
               <YAxis
                 width={110}
-                tickFormatter={value => `${value.toLocaleString("cs-CZ")} Kč`}
+                tickFormatter={value =>
+                  `${value.toLocaleString("cs-CZ")} ${
+                    usedData.type === "wages" || usedData.type === "dph"
+                      ? "Kč"
+                      : ""
+                  }`
+                }
                 tick={{ fill: "var(--chakra-colors-fg-medium-contrast)" }}
                 axisLine={false}
                 tickLine={false}
@@ -223,6 +301,14 @@ export const ChartComp = ({
   usedData,
   confidenceIntervals,
   statistics,
-}: DphChartProps) => {
-  return DphPredictionChart({ usedData, confidenceIntervals, statistics });
+}: ChartProps) => {
+  return usedData && (usedData.data !== null || usedData.data !== undefined) ? (
+    <PredictionChart
+      usedData={usedData}
+      confidenceIntervals={confidenceIntervals}
+      statistics={statistics}
+    />
+  ) : (
+    <Text>Missing data for graph</Text>
+  );
 };

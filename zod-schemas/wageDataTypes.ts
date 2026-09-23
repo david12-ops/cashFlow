@@ -63,8 +63,8 @@ export const IterationsKmeansDataSchema = z.array(
 
 export const DataForWagePredictionSchema = z.object({
   data: WagesDataSchema,
-  aggregatedTrainingData: z.array(z.number()),
-  aggregatedTestData: z.array(z.number()),
+  trainingData: WagesDataSchema,
+  testData: WagesDataSchema,
   optimalK: z.number(),
   iterationsKmeansData: IterationsKmeansDataSchema,
   predictedClusterAmounts: PredictionClusterResultsSchema,

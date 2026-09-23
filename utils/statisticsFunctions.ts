@@ -10,17 +10,6 @@ export function createStatitics(
   // sum for average of the signed relative error
   let sumForRelativeError = 0;
 
-  // console.log("testData:", testData);
-  // console.log("testData length:", testData.length);
-
-  // predictedData.forEach((item, index) => {
-  //   console.log(`predictedData[${index}]:`);
-  //   console.log("date:", item.date);
-  //   console.log("lowerBound:", item.lowerBound);
-  //   console.log("prediction:", item.prediction);
-  //   console.log("upperBound:", item.upperBound);
-  // });
-
   const countForRelativeError = testData.filter(value => value !== 0).length;
 
   const count = Math.min(testData.length, predictedData.length);
@@ -76,10 +65,6 @@ export function computeConfidenceIntervals(
   for (let i = 0; i < rezidua.length; i++) {
     sumSquaredDeviations += Math.pow(rezidua[i] - meanOfRezidua, 2);
   }
-
-  // console.log("sumOfRezidua:", sumOfRezidua);
-  // console.log("meanOfRezidua:", meanOfRezidua);
-  // console.log("sumSquaredDeviations:", sumSquaredDeviations);
 
   for (let i = 0; i < prediction.length; i++) {
     const sigma = Math.sqrt(sumSquaredDeviations / rezidua.length);

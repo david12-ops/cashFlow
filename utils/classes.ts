@@ -16,23 +16,23 @@ import {
 
 export class UsedDataLoans {
   private data: LoansData = [];
-  private aggregatedTrainingData: number[] = [];
-  private aggregatedTestData: number[] = [];
+  private trainingData: LoansData = [];
+  private testData: LoansData = [];
   private aics: AicsData = [];
   private algorithmsParams: AlgorithmsParams = [];
   private predictionsData: PredictionsData = [];
 
   constructor(
     data: LoansData,
-    aggregatedTrainingData: number[],
-    aggregatedTestData: number[],
+    trainingData: LoansData,
+    testData: LoansData,
     aics: AicsData,
     algorithmsParams: AlgorithmsParams,
     predictionsData: PredictionsData
   ) {
     this.data = data;
-    this.aggregatedTrainingData = aggregatedTrainingData;
-    this.aggregatedTestData = aggregatedTestData;
+    this.trainingData = trainingData;
+    this.testData = testData;
     this.aics = aics;
     this.algorithmsParams = algorithmsParams;
     this.predictionsData = predictionsData;
@@ -42,12 +42,12 @@ export class UsedDataLoans {
     return this.data;
   }
 
-  public getAaggregatedTrainingData(): number[] {
-    return this.aggregatedTrainingData;
+  public getTrainingData(): LoansData {
+    return this.trainingData;
   }
 
-  public getAggregatedTestData(): number[] {
-    return this.aggregatedTestData;
+  public getTestData(): LoansData {
+    return this.testData;
   }
 
   public getAics(): AicsData {
@@ -66,8 +66,8 @@ export class UsedDataLoans {
 export class UsedDataInvoices {
   private data: InvoicesData = [];
   private excludetData: InvoicesData = [];
-  private aggregatedTrainingData: number[] = [];
-  private aggregatedTestData: number[] = [];
+  private trainingData: InvoicesData = [];
+  private testData: InvoicesData = [];
   private algorithmParams: AlgorithmSESParams = { alpha: 0, aic: 0 };
   private predictionData: PredictionSESdata = {
     params: {
@@ -80,15 +80,15 @@ export class UsedDataInvoices {
   constructor(
     data: InvoicesData,
     excludedData: InvoicesData,
-    aggregatedTrainingData: number[],
-    aggregatedTestData: number[],
+    trainingData: InvoicesData,
+    testData: InvoicesData,
     algorithmParams: AlgorithmSESParams,
     predictionData: PredictionSESdata
   ) {
     this.data = data;
     this.excludetData = excludedData;
-    this.aggregatedTrainingData = aggregatedTrainingData;
-    this.aggregatedTestData = aggregatedTestData;
+    this.trainingData = trainingData;
+    this.testData = testData;
     this.algorithmParams = algorithmParams;
     this.predictionData = predictionData;
   }
@@ -101,12 +101,12 @@ export class UsedDataInvoices {
     return this.excludetData;
   }
 
-  public getAaggregatedTrainingData(): number[] {
-    return this.aggregatedTrainingData;
+  public getTrainingData(): InvoicesData {
+    return this.trainingData;
   }
 
-  public getAggregatedTestData(): number[] {
-    return this.aggregatedTestData;
+  public getTestData(): InvoicesData {
+    return this.testData;
   }
 
   public getAlgorithmParams(): AlgorithmSESParams {
@@ -120,23 +120,23 @@ export class UsedDataInvoices {
 
 export class UsedDataWages {
   private data: WagesData = [];
-  private aggregatedTrainingData: number[] = [];
-  private aggregatedTestData: number[] = [];
+  private trainingData: WagesData = [];
+  private testData: WagesData = [];
   private optimalK: number = 0;
   private iterationsKmeansData: IterationsKmeansData = [];
   private predictedClusterAmounts: PredictionClusterResults = [];
 
   constructor(
     data: WagesData,
-    aggregatedTrainingData: number[],
-    aggregatedTestData: number[],
+    trainingData: WagesData,
+    testData: WagesData,
     optimalK: number,
     iterationsKmeansData: IterationsKmeansData,
     predictedClusterAmounts: PredictionClusterResults
   ) {
     this.data = data;
-    this.aggregatedTrainingData = aggregatedTrainingData;
-    this.aggregatedTestData = aggregatedTestData;
+    this.trainingData = trainingData;
+    this.testData = testData;
     this.optimalK = optimalK;
     this.iterationsKmeansData = iterationsKmeansData;
     this.predictedClusterAmounts = predictedClusterAmounts;
@@ -146,12 +146,12 @@ export class UsedDataWages {
     return this.data;
   }
 
-  public getAaggregatedTrainingData(): number[] {
-    return this.aggregatedTrainingData;
+  public getTrainingData(): WagesData {
+    return this.trainingData;
   }
 
-  public getAggregatedTestData(): number[] {
-    return this.aggregatedTestData;
+  public getTestData(): WagesData {
+    return this.testData;
   }
 
   public getOptimalK(): number {

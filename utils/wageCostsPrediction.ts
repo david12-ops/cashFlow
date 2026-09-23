@@ -812,9 +812,7 @@ function prepareDataToAlgorithm(data: WagesData): {
   testData: WagesData;
 } {
   const years = [
-    ...data.map(item => {
-      return item.transactionDate.getFullYear();
-    }),
+    ...new Set(data.map(item => item.transactionDate.getFullYear())),
   ].sort((a, b) => a - b);
 
   const secondToLastYear = years[years.length - 2];
@@ -924,17 +922,11 @@ export default function wageCostsPrediction(): {
     });
   }
 
-  const aggregatedTrainingData = aggregateDataByMonth(trainingData);
   const aggregatedTestData = aggregateDataByMonth(testData);
 
   const rezidua = aggregatedTestData.map((item, index) => {
     const prediction = summedPredictions[index].value;
     const residual = item - prediction;
-
-    console.log(
-      `Index ${index}: actual=${item}, prediction=${prediction}, residual=${residual}`
-    );
-
     return residual;
   });
 
@@ -945,8 +937,8 @@ export default function wageCostsPrediction(): {
 
   const savedUsedData = new UsedDataWages(
     data,
-    aggregatedTrainingData,
-    aggregatedTestData,
+    trainingData,
+    testData,
     optimalK,
     iterationsKmeansData,
     predictedClusterAmounts
@@ -954,8 +946,8 @@ export default function wageCostsPrediction(): {
 
   const usedData: DataForWagePrediction = {
     data: savedUsedData.getData(),
-    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
-    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    trainingData: savedUsedData.getTrainingData(),
+    testData: savedUsedData.getTestData(),
     optimalK,
     iterationsKmeansData: savedUsedData.getIterationsKmeansData(),
     predictedClusterAmounts: savedUsedData.getPredictedClusterAmounts(),

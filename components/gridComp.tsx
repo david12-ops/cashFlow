@@ -6,36 +6,39 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 type GridProps = {
-  confidenceIntervals: IntervalData;
+  confidenceIntervalsData: IntervalData;
   itemsPerPage: number;
 };
 
 type PagesData = {
   pagesCount: number;
-  data: { [page: number]: IntervalData };
+  pageData: { [page: number]: IntervalData };
 };
 
 function dataByPage(data: IntervalData, itemsPerPage: number): PagesData {
-  const pageData: PagesData = {
+  const page: PagesData = {
     pagesCount: Math.ceil(data.length / itemsPerPage),
-    data: {},
+    pageData: {},
   };
 
-  for (let i = 0; i < pageData.pagesCount; i++) {
+  for (let i = 0; i < page.pagesCount; i++) {
     const start = i * itemsPerPage;
     const end = start + itemsPerPage;
 
-    pageData.data[i + 1] = data.slice(start, end);
+    page.pageData[i + 1] = data.slice(start, end);
   }
 
-  return pageData;
+  return page;
 }
 
 export const GridCompComp = ({
-  confidenceIntervals,
+  confidenceIntervalsData,
   itemsPerPage,
 }: GridProps) => {
-  const { pagesCount, data } = dataByPage(confidenceIntervals, itemsPerPage);
+  const { pagesCount, pageData } = dataByPage(
+    confidenceIntervalsData,
+    itemsPerPage
+  );
 
   const [pagination, setPaginationState] = useState<boolean>();
   const [page, setPageState] = useState<number>(1);
@@ -79,7 +82,7 @@ export const GridCompComp = ({
 
       <Grid templateColumns="repeat(4, 1fr)" gap={5}>
         {!pagination
-          ? confidenceIntervals.map((item, index) => (
+          ? confidenceIntervalsData.map((item, index) => (
               <Box
                 key={index}
                 p={4}
@@ -93,7 +96,7 @@ export const GridCompComp = ({
                 <Text>Upper Bound: {item.upperBound}</Text>
               </Box>
             ))
-          : data[page].map((item, index) => (
+          : pageData[page].map((item, index) => (
               <Box
                 key={index}
                 p={4}

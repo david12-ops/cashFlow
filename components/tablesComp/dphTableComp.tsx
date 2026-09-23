@@ -26,7 +26,7 @@ function getMedianAndAvg(values: number[]) {
   return { median, avg };
 }
 
-export const TableComp = ({
+export const DphTableComp = ({
   years,
   dataWithYears,
   monthData,
@@ -51,16 +51,18 @@ export const TableComp = ({
           justifyContent={"space-between"}
           p={5}
         >
-          {years.map(year => (
+          {years.map(yearItem => (
             <Box
-              key={year}
+              key={yearItem}
               p={4}
               borderWidth="1px"
               borderRadius="md"
-              bg="bg.subtle"
-              onClick={() => setYearState(year)}
+              bg={year === yearItem ? "blue.500" : "bg.subtle"}
+              color={year === yearItem ? "white" : "inherit"}
+              onClick={() => setYearState(yearItem)}
+              cursor="pointer"
             >
-              {year}
+              {yearItem}
             </Box>
           ))}
         </Box>

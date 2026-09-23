@@ -25,8 +25,8 @@ export const PredictionSESdataSchema = z.object({
 export const DataForInvoicePredictionSchema = z.object({
   data: InvoicesDataSchema,
   excludetData: InvoicesDataSchema,
-  aggregatedTrainingData: z.array(z.number()),
-  aggregatedTestData: z.array(z.number()),
+  trainingData: InvoicesDataSchema,
+  testData: InvoicesDataSchema,
   algorithmParams: AlgorithmSESParamsSchema,
   predictionsData: z.object({
     countOfFutureMonthsToPredict: z.number(),

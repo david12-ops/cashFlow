@@ -675,8 +675,8 @@ export default function providedLoansPrediction():
 
   const savedUsedData = new UsedDataLoans(
     data,
-    aggtrainingData,
-    aggtestData,
+    trainingData,
+    testData,
     aics,
     algorithmParams,
     predictionsData
@@ -684,8 +684,8 @@ export default function providedLoansPrediction():
 
   const usedData: DataForLoanPrediction = {
     data: savedUsedData.getData(),
-    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
-    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    trainingData: savedUsedData.getTrainingData(),
+    testData: savedUsedData.getTestData(),
     aics,
     algorithmsParams: savedUsedData.getAlgorithmsParams(),
     predictionsData: {

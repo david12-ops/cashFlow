@@ -316,8 +316,8 @@ export default function issuedInvoicesPrediction(): {
   const savedUsedData = new UsedDataInvoices(
     data,
     excludetData,
-    aggtrainingData,
-    aggtestData,
+    trainingData,
+    testData,
     {
       alpha: bestSESparams.bestAlpha,
       aic: bestSESparams.bestAic,
@@ -334,8 +334,8 @@ export default function issuedInvoicesPrediction(): {
   const usedData: DataForInvoicePrediction = {
     data: savedUsedData.getData(),
     excludetData: savedUsedData.getEexcludetData(),
-    aggregatedTrainingData: savedUsedData.getAaggregatedTrainingData(),
-    aggregatedTestData: savedUsedData.getAggregatedTestData(),
+    trainingData: savedUsedData.getTrainingData(),
+    testData: savedUsedData.getTestData(),
     algorithmParams: savedUsedData.getAlgorithmParams(),
     predictionsData: {
       countOfFutureMonthsToPredict,
