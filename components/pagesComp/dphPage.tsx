@@ -1,7 +1,7 @@
 "use client";
 
 import { ChartComp } from "@/components/chartComp";
-import { GridIntervalsDataComponent } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridsComp";
 import DphTableComp from "@/components/tablesComp/dphTableComp";
 import { DataForDPHprediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";

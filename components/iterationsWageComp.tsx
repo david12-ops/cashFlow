@@ -3,7 +3,7 @@
 import { IterationsKmeansData } from "@/zod-schemas";
 import { Box, Button, Heading, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { GridWagesDataComponent } from "./gridComp";
+import { GridWagesDataComponent } from "./gridsComp";
 
 type IterationsWageComponentProps = {
   data: IterationsKmeansData;

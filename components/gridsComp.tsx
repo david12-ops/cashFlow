@@ -102,13 +102,13 @@ export const GridWagesDataComponent = ({
               >
                 <Text mb={2}>DimDateId: {item.dimDateId}</Text>
                 <Text mb={2}>
-                  Transaction date{" "}
+                  Transaction date:{" "}
                   {item.transactionDate.toLocaleDateString("cs-CZ")}
                 </Text>
                 <Text mb={2}>Base amount: {item.baseAmount}</Text>
-                <Text mb={2}>Account{item.account}</Text>
-                <Text mb={2}>Division{item.division}</Text>
-                <Text>Currency{item.currency}</Text>
+                <Text mb={2}>Account: {item.account}</Text>
+                <Text mb={2}>Division: {item.division}</Text>
+                <Text>Currency: {item.currency}</Text>
               </Box>
             ))
           : pageData[page].map((item, index) => (
@@ -121,13 +121,13 @@ export const GridWagesDataComponent = ({
               >
                 <Text mb={2}>DimDateId: {item.dimDateId}</Text>
                 <Text mb={2}>
-                  Transaction date{" "}
+                  Transaction date:{" "}
                   {item.transactionDate.toLocaleDateString("cs-CZ")}
                 </Text>
                 <Text mb={2}>Base amount: {item.baseAmount}</Text>
-                <Text mb={2}>Account{item.account}</Text>
-                <Text mb={2}>Division{item.division}</Text>
-                <Text>Currency{item.currency}</Text>
+                <Text mb={2}>Account: {item.account}</Text>
+                <Text mb={2}>Division: {item.division}</Text>
+                <Text>Currency: {item.currency}</Text>
               </Box>
             ))}
       </Grid>

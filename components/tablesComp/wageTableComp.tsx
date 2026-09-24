@@ -2,7 +2,7 @@ import { WagesData } from "@/zod-schemas";
 
 import { Box, Button, Table, Text } from "@chakra-ui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 type WageTableProps = {
   years: number[];
@@ -68,16 +68,17 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
   const [pagination, setPaginationState] = useState<boolean>();
   const [page, setPageState] = useState<number>(1);
 
-  useEffect(() => {
+  const dataOfTheYear = data.filter(
+    item => item.transactionDate.getFullYear() === year
+  );
+
+  const handleButtonClick = () => {
+    setPaginationState(!pagination);
     tableRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-  }, [pagination]);
-
-  const dataOfTheYear = data.filter(
-    item => item.transactionDate.getFullYear() === year
-  );
+  };
 
   const avgAndMedian = getMedianAndAvg(
     dataOfTheYear.map(item => item.baseAmount)
@@ -227,7 +228,7 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
             </Button>
           </Box>
           {pagination && <Text>Page: {page}</Text>}
-          <Button onClick={() => setPaginationState(!pagination)}>
+          <Button onClick={handleButtonClick}>
             {pagination ? "Show all" : "Show pages"}
           </Button>
         </Box>

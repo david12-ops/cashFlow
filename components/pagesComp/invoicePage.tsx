@@ -1,6 +1,6 @@
 "use client";
 
-import { GridIntervalsDataComponent } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridsComp";
 import { Box, Heading, Text, Span } from "@chakra-ui/react";
 
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import { GridIntervalsDataComponent } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridsComp";
 import { DataForLoanPrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, Text, Span } from "@chakra-ui/react";
 

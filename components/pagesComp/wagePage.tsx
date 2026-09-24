@@ -1,6 +1,6 @@
 "use client";
 
-import { GridIntervalsDataComponent } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridsComp";
 import { DataForWagePrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";
 import { House } from "lucide-react";
