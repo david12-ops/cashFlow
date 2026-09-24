@@ -1,8 +1,8 @@
 "use client";
 
 import { ChartComp } from "@/components/chartComp";
-import { GridCompComp } from "@/components/gridComp";
-import { DphTableComp } from "@/components/tablesComp/dphTableComp";
+import { GridIntervalsDataComponent } from "@/components/gridComp";
+import DphTableComp from "@/components/tablesComp/dphTableComp";
 import { DataForDPHprediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";
 import { House } from "lucide-react";
@@ -149,11 +149,11 @@ export default function DphPage({ data }: DphPageProps) {
           >
             <Box>
               {monthlyDPHPrediction ? (
-                <GridCompComp
+                <GridIntervalsDataComponent
                   confidenceIntervalsData={
                     monthlyDPHPrediction.confidenceIntervals
                   }
-                  itemsPerPage={8}
+                  itemsPerPage={6}
                 />
               ) : (
                 <Text>Missing confidence intervals data</Text>

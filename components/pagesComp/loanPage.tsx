@@ -1,6 +1,6 @@
 "use client";
 
-import { GridCompComp } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridComp";
 import { DataForLoanPrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, Text, Span } from "@chakra-ui/react";
 
@@ -44,11 +44,11 @@ export default function LoanPage({ data }: LoanPageProps) {
           >
             <Box>
               {loanDelayPrediction ? (
-                <GridCompComp
+                <GridIntervalsDataComponent
                   confidenceIntervalsData={
                     loanDelayPrediction.confidenceIntervals
                   }
-                  itemsPerPage={8}
+                  itemsPerPage={6}
                 />
               ) : (
                 <Text>Missing confidence intervals data</Text>

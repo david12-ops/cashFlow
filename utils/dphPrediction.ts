@@ -456,24 +456,11 @@ function monthlyDPHPrediction():
     return undefined;
   }
 
-  Object.entries(data).forEach(([key, values]) => {
-    console.log(`=== ${key} ===`);
-
-    values.forEach((item, index) => {
-      console.log(`[${index}]`, {
-        date_val: item.date_val.toLocaleString("cs-CZ"),
-        dph_val: item.dph_val,
-      });
-    });
-  });
-
   //     const firstPartValues: DphData = Object.fromEntries(
   //   Object.entries(data).filter(([key]) => key !== testData.key)
   // );
 
   const keysOfData = Object.keys(data);
-
-  console.log("keysData " + keysOfData);
 
   const firstPartValues: DphData = {};
 
@@ -489,12 +476,6 @@ function monthlyDPHPrediction():
   const lastKey = keysOfData[keysOfData.length - 1];
   const testData = data[lastKey];
 
-  console.log("testData.length " + testData.length);
-  testData.forEach(item => {
-    console.log("dph date " + item.date_val.toLocaleString("cs-CZ"));
-    console.log("dph val " + item.dph_val);
-  });
-
   // Its for testing data, we need to prepare the last active month, and then change the days
   const preparedTestData = prepareTestingData(testData, lastKey);
 
@@ -504,31 +485,6 @@ function monthlyDPHPrediction():
     preparedTestData.key
   ) {
     const trainingData = firstPartValues;
-
-    console.log("--------------------------------------------------------");
-    console.log("training");
-    Object.entries(trainingData).forEach(([key, values]) => {
-      console.log(`=== ${key} ===`);
-
-      values.forEach((item, index) => {
-        console.log(`[${index}]`, {
-          date_val: item.date_val.toLocaleString("cs-CZ"),
-          dph_val: item.dph_val,
-        });
-      });
-    });
-
-    console.log("--------------------------------------------------------");
-    console.log("test");
-    Object.values(preparedTestData.data[preparedTestData.key]).forEach(item => {
-      console.log(`=== ${preparedTestData.key} ===`);
-
-      console.log(`[${preparedTestData.key}]`, {
-        date_val: item.date_val.toLocaleString("cs-CZ"),
-        dph_val: item.dph_val,
-      });
-    });
-    console.log("--------------------------------------------------------");
 
     const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
       aggregateMonthlyDPHvaluesbyDay(data);

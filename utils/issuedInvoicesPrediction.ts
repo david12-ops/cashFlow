@@ -280,34 +280,6 @@ export default function issuedInvoicesPrediction(): {
     smoothedDataBySES
   );
 
-  // console.log(
-  //   "---------------------------------------------------------------"
-  // );
-  // console.log("Původní data:", data);
-  // console.log("Délka původních dat:", data.length);
-
-  // console.log("Data po odstranění odlehlých hodnot:", excludetData);
-  // console.log("Délka dat po odstranění odlehlých hodnot:", excludetData.length);
-  // console.log(
-  //   "trainig data a delka " + trainingData + " " + trainingData.length
-  // );
-  // console.log(
-  //   "smoothedDataBySES ve funkci smoothedValues a delka " +
-  //     smoothedDataBySES.smoothedValues +
-  //     " " +
-  //     smoothedDataBySES.smoothedValues.length
-  // );
-  // console.log(
-  //   "smoothedDataBySES ve funkci rezidua a delka " +
-  //     smoothedDataBySES.rezidua +
-  //     " " +
-  //     smoothedDataBySES.rezidua.length
-  // );
-
-  // predictionSES.forEach(item => {
-  //   console.log(item);
-  // });
-
   const confidenceIntervals = computeConfidenceIntervals(
     smoothedDataBySES.rezidua,
     predictionSES

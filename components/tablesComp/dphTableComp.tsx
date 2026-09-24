@@ -1,7 +1,7 @@
 "use client";
 
 import { DphData, MonthData } from "@/zod-schemas";
-import { Box, Table } from "@chakra-ui/react";
+import { Box, Button, Table } from "@chakra-ui/react";
 import { useState } from "react";
 
 type DphTableProps = {
@@ -26,11 +26,7 @@ function getMedianAndAvg(values: number[]) {
   return { median, avg };
 }
 
-export const DphTableComp = ({
-  years,
-  dataWithYears,
-  monthData,
-}: DphTableProps) => {
+const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
   const [year, setYearState] = useState<string | null>(
     years != null ? years[0] : null
   );
@@ -50,20 +46,21 @@ export const DphTableComp = ({
           flexDirection={"row"}
           justifyContent={"space-between"}
           p={5}
+          flexWrap={"wrap"}
         >
           {years.map(yearItem => (
-            <Box
+            <Button
               key={yearItem}
               p={4}
               borderWidth="1px"
               borderRadius="md"
-              bg={year === yearItem ? "blue.500" : "bg.subtle"}
-              color={year === yearItem ? "white" : "inherit"}
+              bg={year === yearItem ? "blue.500" : "gray.200"}
+              color={year === yearItem ? "white" : "gray.700"}
               onClick={() => setYearState(yearItem)}
               cursor="pointer"
             >
               {yearItem}
-            </Box>
+            </Button>
           ))}
         </Box>
       )}
@@ -150,3 +147,5 @@ export const DphTableComp = ({
     </Box>
   );
 };
+
+export default DphTableComp;

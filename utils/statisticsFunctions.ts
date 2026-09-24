@@ -53,9 +53,6 @@ export function computeConfidenceIntervals(
   prediction: { date: string; value: number }[]
 ): IntervalData {
   const data: IntervalData = [];
-  // console.log("--------------------------------------");
-  // console.log("rezidua " + JSON.stringify(rezidua));
-  // console.log("rezidua length:", rezidua.length);
 
   const sumOfRezidua = rezidua.reduce((acc, val) => acc + val, 0);
   const meanOfRezidua = sumOfRezidua / rezidua.length;

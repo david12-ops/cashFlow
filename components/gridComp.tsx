@@ -1,21 +1,30 @@
 "use client";
 
-import { IntervalData } from "@/zod-schemas";
+import { IntervalData, WagesData } from "@/zod-schemas";
 import { Grid, Text, Box, Button } from "@chakra-ui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-type GridProps = {
+type GridIntervalsDataProps = {
   confidenceIntervalsData: IntervalData;
   itemsPerPage: number;
 };
 
-type PagesData = {
-  pagesCount: number;
-  pageData: { [page: number]: IntervalData };
+type GridWageDataProps = {
+  wageData: WagesData;
+  itemsPerPage: number;
 };
 
-function dataByPage(data: IntervalData, itemsPerPage: number): PagesData {
+type PageData = {
+  [page: number]: object[];
+};
+
+type PagesData = {
+  pagesCount: number;
+  pageData: PageData;
+};
+
+function dataByPage(data: object[], itemsPerPage: number): PagesData {
   const page: PagesData = {
     pagesCount: Math.ceil(data.length / itemsPerPage),
     pageData: {},
@@ -31,14 +40,14 @@ function dataByPage(data: IntervalData, itemsPerPage: number): PagesData {
   return page;
 }
 
-export const GridCompComp = ({
-  confidenceIntervalsData,
+export const GridWagesDataComponent = ({
+  wageData,
   itemsPerPage,
-}: GridProps) => {
-  const { pagesCount, pageData } = dataByPage(
-    confidenceIntervalsData,
-    itemsPerPage
-  );
+}: GridWageDataProps) => {
+  const { pagesCount, pageData } = dataByPage(wageData, itemsPerPage) as {
+    pagesCount: number;
+    pageData: { [page: number]: WagesData };
+  };
 
   const [pagination, setPaginationState] = useState<boolean>();
   const [page, setPageState] = useState<number>(1);
@@ -50,6 +59,7 @@ export const GridCompComp = ({
         flexDirection={"row"}
         justifyContent={"space-between"}
         p={5}
+        flexWrap={"wrap"}
       >
         <Box display="flex" justifyContent="center" gap={2}>
           <Button
@@ -80,7 +90,105 @@ export const GridCompComp = ({
         </Button>
       </Box>
 
-      <Grid templateColumns="repeat(4, 1fr)" gap={5}>
+      <Grid templateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap={5}>
+        {!pagination
+          ? wageData.map((item, index) => (
+              <Box
+                key={index}
+                p={4}
+                bg="bg.subtle"
+                borderRadius="md"
+                boxShadow="sm"
+              >
+                <Text mb={2}>DimDateId: {item.dimDateId}</Text>
+                <Text mb={2}>
+                  Transaction date{" "}
+                  {item.transactionDate.toLocaleDateString("cs-CZ")}
+                </Text>
+                <Text mb={2}>Base amount: {item.baseAmount}</Text>
+                <Text mb={2}>Account{item.account}</Text>
+                <Text mb={2}>Division{item.division}</Text>
+                <Text>Currency{item.currency}</Text>
+              </Box>
+            ))
+          : pageData[page].map((item, index) => (
+              <Box
+                key={index}
+                p={4}
+                bg="bg.subtle"
+                borderRadius="md"
+                boxShadow="sm"
+              >
+                <Text mb={2}>DimDateId: {item.dimDateId}</Text>
+                <Text mb={2}>
+                  Transaction date{" "}
+                  {item.transactionDate.toLocaleDateString("cs-CZ")}
+                </Text>
+                <Text mb={2}>Base amount: {item.baseAmount}</Text>
+                <Text mb={2}>Account{item.account}</Text>
+                <Text mb={2}>Division{item.division}</Text>
+                <Text>Currency{item.currency}</Text>
+              </Box>
+            ))}
+      </Grid>
+    </Box>
+  );
+};
+
+export const GridIntervalsDataComponent = ({
+  confidenceIntervalsData,
+  itemsPerPage,
+}: GridIntervalsDataProps) => {
+  const { pagesCount, pageData } = dataByPage(
+    confidenceIntervalsData,
+    itemsPerPage
+  ) as {
+    pagesCount: number;
+    pageData: { [page: number]: IntervalData };
+  };
+
+  const [pagination, setPaginationState] = useState<boolean>();
+  const [page, setPageState] = useState<number>(1);
+
+  return (
+    <Box>
+      <Box
+        display="flex"
+        flexDirection={"row"}
+        justifyContent={"space-between"}
+        p={5}
+        flexWrap={"wrap"}
+      >
+        <Box display="flex" justifyContent="center" gap={2}>
+          <Button
+            onClick={() => {
+              if (page > 1) {
+                setPageState(page - 1);
+              }
+            }}
+            disabled={!pagination || page === 1}
+          >
+            <ChevronLeft size={20} />
+          </Button>
+
+          <Button
+            onClick={() => {
+              if (page < pagesCount) {
+                setPageState(page + 1);
+              }
+            }}
+            disabled={!pagination || page === pagesCount}
+          >
+            <ChevronRight size={20} />
+          </Button>
+        </Box>
+        {pagination && <Text>Page: {page}</Text>}
+        <Button onClick={() => setPaginationState(!pagination)}>
+          {pagination ? "Show all" : "Show pages"}
+        </Button>
+      </Box>
+
+      <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={5}>
         {!pagination
           ? confidenceIntervalsData.map((item, index) => (
               <Box

@@ -1,12 +1,13 @@
 "use client";
 
-import { GridCompComp } from "@/components/gridComp";
+import { GridIntervalsDataComponent } from "@/components/gridComp";
 import { DataForWagePrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";
 import { House } from "lucide-react";
 import Link from "next/link";
 import { ChartComp } from "../chartComp";
-import { WageTableComp } from "../tablesComp/wageTableComp";
+import WageTableComp from "../tablesComp/wageTableComp";
+import IterationsWageComponent from "../iterationsWageComp";
 
 type WagePageProps = {
   data: {
@@ -56,7 +57,7 @@ export default function WagePage({ data }: WagePageProps) {
             />
           )}
         </Box>
-        <Box display="flex" flexDirection="column" gap={16}>
+        <Box display="flex" flexDirection="column" gap={10}>
           <Box>
             <Heading as="h1" size="lg" mb={8} textAlign="center">
               Data used for evaluation of wage prediction
@@ -117,9 +118,12 @@ export default function WagePage({ data }: WagePageProps) {
               Count of groups: {wagePrediction.usedData.optimalK}
             </Text>
           </Box>
-          <Box></Box>
         </Box>
-
+        <Box>
+          <IterationsWageComponent
+            data={wagePrediction.usedData.iterationsKmeansData}
+          />
+        </Box>
         <Box>
           <Heading as="h1" size="lg" mb={8} textAlign="center">
             Evaluation of wages prediction
@@ -132,9 +136,9 @@ export default function WagePage({ data }: WagePageProps) {
           >
             <Box>
               {
-                <GridCompComp
+                <GridIntervalsDataComponent
                   confidenceIntervalsData={wagePrediction.confidenceIntervals}
-                  itemsPerPage={8}
+                  itemsPerPage={6}
                 />
               }
             </Box>

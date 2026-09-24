@@ -2,7 +2,7 @@ import { WagesData } from "@/zod-schemas";
 
 import { Box, Button, Table, Text } from "@chakra-ui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type WageTableProps = {
   years: number[];
@@ -48,12 +48,7 @@ function getMedianAndAvg(values: number[]) {
   return { median, avg };
 }
 
-export const WageTableComp = ({
-  years,
-  data,
-  itemsPerPage,
-  type,
-}: WageTableProps) => {
+const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
   let yearsData: number[] = [];
 
   if (type === "all") {
@@ -68,9 +63,17 @@ export const WageTableComp = ({
     yearsData = years.slice(-1);
   }
 
+  const tableRef = useRef<HTMLDivElement>(null);
   const [year, setYearState] = useState<number>(yearsData[0]);
   const [pagination, setPaginationState] = useState<boolean>();
   const [page, setPageState] = useState<number>(1);
+
+  useEffect(() => {
+    tableRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [pagination]);
 
   const dataOfTheYear = data.filter(
     item => item.transactionDate.getFullYear() === year
@@ -89,24 +92,25 @@ export const WageTableComp = ({
           flexDirection={"row"}
           justifyContent={"space-between"}
           p={5}
+          flexWrap={"wrap"}
         >
           {yearsData.map(yearItem => (
-            <Box
+            <Button
               key={yearItem}
               p={4}
               borderWidth="1px"
               borderRadius="md"
-              bg={year === yearItem ? "blue.500" : "bg.subtle"}
-              color={year === yearItem ? "white" : "inherit"}
+              bg={year === yearItem ? "blue.500" : "gray.200"}
+              color={year === yearItem ? "white" : "gray.700"}
               onClick={() => setYearState(yearItem)}
               cursor="pointer"
             >
               {yearItem}
-            </Box>
+            </Button>
           ))}
         </Box>
       )}
-      <Box display="flex" flexDirection="column" gap={16}>
+      <Box display="flex" flexDirection="column" gap={16} ref={tableRef}>
         <Table.Root variant="outline">
           <Table.Header>
             <Table.Row>
@@ -197,7 +201,7 @@ export const WageTableComp = ({
           display="flex"
           flexDirection={"row"}
           justifyContent={"space-between"}
-          p={5}
+          flexWrap={"wrap"}
         >
           <Box display="flex" justifyContent="center" gap={2}>
             <Button
@@ -231,3 +235,5 @@ export const WageTableComp = ({
     </Box>
   );
 };
+
+export default WageTableComp;
