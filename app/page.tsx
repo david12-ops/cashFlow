@@ -64,11 +64,11 @@ export default async function Page() {
           </List.Item>
 
           <List.Item>
-            {/* <Link href="/invoices"> */}
-            <HStack gap={2}>
-              <FileText /> Faktury – zatím nedostupné
-            </HStack>
-            {/* </Link> */}
+            <Link href="/invoices">
+              <HStack gap={2}>
+                <FileText /> Faktury – zatím ve vývoji
+              </HStack>
+            </Link>
           </List.Item>
 
           <List.Item>

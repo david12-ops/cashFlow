@@ -5,7 +5,7 @@ import { DataForWagePrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";
 import { House } from "lucide-react";
 import Link from "next/link";
-import { ChartComp } from "../chartComp";
+import ChartComp from "../chartComp";
 import WageTableComp from "../tablesComp/wageTableComp";
 import IterationsWageComponent from "../iterationsWageComp";
 
@@ -49,7 +49,7 @@ export default function WagePage({ data }: WagePageProps) {
           {wagePrediction && (
             <ChartComp
               usedData={{
-                type: "wages",
+                type: "wage",
                 data: wagePrediction.usedData.data,
               }}
               confidenceIntervals={wagePrediction.confidenceIntervals}
@@ -83,7 +83,7 @@ export default function WagePage({ data }: WagePageProps) {
             <WageTableComp
               years={[
                 ...new Set(
-                  wagePrediction.usedData.data.map(item =>
+                  wagePrediction.usedData.trainingData.map(item =>
                     item.transactionDate.getFullYear()
                   )
                 ),
@@ -100,7 +100,7 @@ export default function WagePage({ data }: WagePageProps) {
             <WageTableComp
               years={[
                 ...new Set(
-                  wagePrediction.usedData.data.map(item =>
+                  wagePrediction.usedData.testData.map(item =>
                     item.transactionDate.getFullYear()
                   )
                 ),
@@ -139,6 +139,7 @@ export default function WagePage({ data }: WagePageProps) {
                 <GridIntervalsDataComponent
                   confidenceIntervalsData={wagePrediction.confidenceIntervals}
                   itemsPerPage={6}
+                  valueType="currency"
                 />
               }
             </Box>

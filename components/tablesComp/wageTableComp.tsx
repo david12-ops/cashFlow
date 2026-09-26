@@ -65,7 +65,7 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [year, setYearState] = useState<number>(yearsData[0]);
-  const [pagination, setPaginationState] = useState<boolean>();
+  const [pagination, setPaginationState] = useState<boolean>(true);
   const [page, setPageState] = useState<number>(1);
 
   const dataOfTheYear = data.filter(
@@ -137,7 +137,7 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
                       <Table.Cell>
                         {item.transactionDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
-                      <Table.Cell>{item.baseAmount}</Table.Cell>
+                      <Table.Cell>{item.baseAmount} Kč</Table.Cell>
                       <Table.Cell>{item.account}</Table.Cell>
                       <Table.Cell>{item.division}</Table.Cell>
                       <Table.Cell>{item.currency}</Table.Cell>
@@ -148,14 +148,14 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}
+                            {avgAndMedian.avg} Kč
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}
+                            {avgAndMedian.median} Kč
                           </Table.Cell>
                         </>
                       )}
@@ -171,7 +171,7 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
                       <Table.Cell>
                         {item.transactionDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
-                      <Table.Cell>{item.baseAmount}</Table.Cell>
+                      <Table.Cell>{item.baseAmount} Kč</Table.Cell>
                       <Table.Cell>{item.account}</Table.Cell>
                       <Table.Cell>{item.division}</Table.Cell>
                       <Table.Cell>{item.currency}</Table.Cell>
@@ -182,14 +182,14 @@ const WageTableComp = ({ years, data, itemsPerPage, type }: WageTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}
+                            {avgAndMedian.avg} Kč
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}
+                            {avgAndMedian.median} Kč
                           </Table.Cell>
                         </>
                       )}

@@ -1,13 +1,17 @@
 "use client";
 
 import { GridIntervalsDataComponent } from "@/components/gridsComp";
-import { Box, Heading, Text, Span } from "@chakra-ui/react";
+import { Box, Heading, Text, Span, IconButton } from "@chakra-ui/react";
+import { House } from "lucide-react";
+import Link from "next/link";
 
 import {
   DataForInvoicePrediction,
   IntervalData,
   Statistics,
 } from "@/zod-schemas";
+import ChartComp from "../chartComp";
+import InvoiceTableComp from "../tablesComp/InvoiceTableComp";
 
 type InvoicePageProps = {
   data: {
@@ -37,12 +41,102 @@ export default function InvoicePage({ data }: InvoicePageProps) {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Invoice Graph
+              Monthly delay (Invoice) Graph
             </Heading>
+
+            <IconButton asChild aria-label="Domů" position="absolute" right={5}>
+              <Link href="/">
+                <House size={20} />
+              </Link>
+            </IconButton>
+          </Box>
+
+          <ChartComp
+            usedData={{
+              type: "invoice",
+              data: invoicePaymentDelayPrediction.usedData.data,
+            }}
+            confidenceIntervals={
+              invoicePaymentDelayPrediction.confidenceIntervals
+            }
+            statistics={invoicePaymentDelayPrediction.statistics}
+          />
+        </Box>
+        <Box display="flex" flexDirection="column" gap={10}>
+          <Box>
+            <Heading as="h1" size="lg" mb={8} textAlign="center">
+              Data used for evaluation of invoice delay prediction
+            </Heading>
+
+            <InvoiceTableComp
+              years={[
+                ...new Set(
+                  invoicePaymentDelayPrediction.usedData.data.map(item =>
+                    item.DueDate.getFullYear()
+                  )
+                ),
+              ].sort((a, b) => a - b)}
+              data={invoicePaymentDelayPrediction.usedData.data}
+              type="all"
+              itemsPerPage={30}
+            />
+          </Box>
+          <Box>
+            <Heading as="h1" size="lg" mb={8} textAlign="center">
+              Excluded data of invoice delay prediction
+            </Heading>
+
+            <InvoiceTableComp
+              years={[
+                ...new Set(
+                  invoicePaymentDelayPrediction.usedData.excludetData.map(
+                    item => item.DueDate.getFullYear()
+                  )
+                ),
+              ].sort((a, b) => a - b)}
+              data={invoicePaymentDelayPrediction.usedData.excludetData}
+              type="all"
+              itemsPerPage={30}
+            />
+          </Box>
+          <Box>
+            <Heading as="h2" size="lg" mb={8} textAlign="center">
+              Data (training) used for evaluation of loan delay prediction
+            </Heading>
+
+            <InvoiceTableComp
+              years={[
+                ...new Set(
+                  invoicePaymentDelayPrediction.usedData.trainingData.map(
+                    item => item.DueDate.getFullYear()
+                  )
+                ),
+              ].sort((a, b) => a - b)}
+              data={invoicePaymentDelayPrediction.usedData.trainingData}
+              type="training"
+              itemsPerPage={30}
+            />
+          </Box>
+          <Box>
+            <Heading as="h2" size="lg" mb={8} textAlign="center">
+              Data (test) used for evaluation of loan delay prediction
+            </Heading>
+
+            <InvoiceTableComp
+              years={[
+                ...new Set(
+                  invoicePaymentDelayPrediction.usedData.testData.map(item =>
+                    item.DueDate.getFullYear()
+                  )
+                ),
+              ].sort((a, b) => a - b)}
+              data={invoicePaymentDelayPrediction.usedData.testData}
+              type="test"
+              itemsPerPage={30}
+            />
           </Box>
         </Box>
-        <Box display="flex" flexDirection="column" gap={10}></Box>
-
+        <Box>missing</Box>
         <Box>
           <Heading as="h1" size="lg" mb={8} textAlign="center">
             Evaluation of invoices prediction
@@ -60,6 +154,7 @@ export default function InvoicePage({ data }: InvoicePageProps) {
                     invoicePaymentDelayPrediction.confidenceIntervals
                   }
                   itemsPerPage={6}
+                  valueType="day"
                 />
               ) : (
                 <Text>Missing confidence intervals data</Text>

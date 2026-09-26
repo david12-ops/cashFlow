@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartComp } from "@/components/chartComp";
+import ChartComp from "@/components/chartComp";
 import { GridIntervalsDataComponent } from "@/components/gridsComp";
 import DphTableComp from "@/components/tablesComp/dphTableComp";
 import { DataForDPHprediction, IntervalData, Statistics } from "@/zod-schemas";
@@ -48,7 +48,7 @@ export default function DphPage({ data }: DphPageProps) {
             </IconButton>
           </Box>
 
-          {monthlyDPHPrediction && (
+          {monthlyDPHPrediction ? (
             <ChartComp
               usedData={{
                 type: "dph",
@@ -57,6 +57,8 @@ export default function DphPage({ data }: DphPageProps) {
               confidenceIntervals={monthlyDPHPrediction.confidenceIntervals}
               statistics={monthlyDPHPrediction.statistics}
             />
+          ) : (
+            <Text>Missing data for graph</Text>
           )}
         </Box>
         <Box display="flex" flexDirection="column" gap={16}>
@@ -69,6 +71,7 @@ export default function DphPage({ data }: DphPageProps) {
                 years={Object.keys(monthlyDPHPrediction.usedData.data)}
                 dataWithYears={monthlyDPHPrediction.usedData.data}
                 monthData={null}
+                valueType="currency"
               />
             ) : (
               <Text>Missing data for table (used data)</Text>
@@ -83,6 +86,7 @@ export default function DphPage({ data }: DphPageProps) {
                 years={Object.keys(monthlyDPHPrediction.usedData.trainingData)}
                 dataWithYears={monthlyDPHPrediction.usedData.trainingData}
                 monthData={null}
+                valueType="currency"
               />
             ) : (
               <Text>Missing data for table (training)</Text>
@@ -93,11 +97,13 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h2" size="lg" mb={8} textAlign="center">
               Data (test) used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction && monthlyDPHPrediction.usedData.testData ? (
+            {monthlyDPHPrediction &&
+            monthlyDPHPrediction.usedData.testData !== null ? (
               <DphTableComp
                 years={[monthlyDPHPrediction.usedData.testData.key]}
                 dataWithYears={monthlyDPHPrediction.usedData.testData.data}
                 monthData={null}
+                valueType="currency"
               />
             ) : (
               <Text>Missing data for table (test)</Text>
@@ -107,11 +113,13 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h2" size="lg" mb={8} textAlign="center">
               Data (active) used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction && monthlyDPHPrediction.usedData ? (
+            {monthlyDPHPrediction &&
+            monthlyDPHPrediction.usedData.activeMonth ? (
               <DphTableComp
                 years={null}
                 dataWithYears={null}
                 monthData={monthlyDPHPrediction.usedData.activeMonth}
+                valueType="currency"
               />
             ) : (
               <Text>Missing data for table (active month)</Text>
@@ -132,6 +140,7 @@ export default function DphPage({ data }: DphPageProps) {
               years={null}
               dataWithYears={null}
               monthData={monthlyDPHPrediction.usedData.aggMonthNumbersInPercent}
+              valueType="percent"
             />
           ) : (
             <Text>Missing data for table (prediction in percent)</Text>
@@ -154,6 +163,7 @@ export default function DphPage({ data }: DphPageProps) {
                     monthlyDPHPrediction.confidenceIntervals
                   }
                   itemsPerPage={6}
+                  valueType="currency"
                 />
               ) : (
                 <Text>Missing confidence intervals data</Text>

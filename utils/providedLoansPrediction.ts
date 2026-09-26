@@ -560,7 +560,7 @@ export default function providedLoansPrediction():
   const aics: { model: "holt" | "holt-winter" | "ses"; aicValue: number }[] =
     [];
 
-  const countOfFutureMonthsToPredict = 6;
+  const countOfFutureMonthsToPredict = 12;
 
   // SES
   const bestAlphaPickedByMAE = pickBestAlphaByMAE(aggtrainingData);

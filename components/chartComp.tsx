@@ -23,7 +23,7 @@ import {
 type ChartProps = {
   usedData: {
     data: DphData | InvoicesData | LoansData | WagesData;
-    type: "invoices" | "loans" | "wages" | "dph";
+    type: "invoice" | "loan" | "wage" | "dph";
   };
 
   confidenceIntervals: IntervalData;
@@ -32,6 +32,7 @@ type ChartProps = {
 
 type ChartData = {
   date: string;
+  type: "dph" | "invoice" | "loan" | "wage";
   actual?: number;
   prediction?: number;
   lowerBound?: number;
@@ -44,6 +45,11 @@ type CustomTooltipProps = {
     name?: string;
     value?: number | string;
     dataKey?: string | number;
+    payload?: {
+      date?: string;
+      actual?: number;
+      type?: "dph" | "invoice" | "loan" | "wage";
+    };
   }[];
   label?: string;
 };
@@ -55,20 +61,32 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
   return (
     <div>
-      <p>Datum: {label}</p>
+      <p>Date: {label}</p>
 
-      {payload.map(item => (
-        <p key={String(item.dataKey)}>
-          {item.name}: {item.value?.toLocaleString("cs-CZ")} Kč
-        </p>
-      ))}
+      {payload.map(item => {
+        console.log("plaYLOAD " + JSON.stringify(payload));
+        const type = item.payload?.type;
+
+        const unit =
+          type === "dph" || type === "wage"
+            ? " Kč"
+            : type === "invoice" || type === "loan"
+              ? " Days"
+              : "";
+
+        return (
+          <p key={String(item.dataKey)}>
+            {item.name}: {item.value?.toLocaleString("cs-CZ")} {unit}
+          </p>
+        );
+      })}
     </div>
   );
 };
 
 function getActualDataForChart(usedData: {
   data: DphData | InvoicesData | LoansData | WagesData;
-  type: "invoices" | "loans" | "wages" | "dph";
+  type: "invoice" | "loan" | "wage" | "dph";
 }): ChartData[] | undefined {
   const { data, type } = usedData;
 
@@ -80,33 +98,45 @@ function getActualDataForChart(usedData: {
         .flat()
         .sort((a, b) => a.date_val.getTime() - b.date_val.getTime())
         .map(item => ({
-          date: item.date_val.toLocaleDateString("cs-CZ"),
+          date: `${item.date_val.getFullYear()}-${String(
+            item.date_val.getMonth() + 1
+          ).padStart(
+            2,
+            "0"
+          )}-${String(item.date_val.getDate()).padStart(2, "0")}`,
           actual: item.dph_val,
+          type: "dph",
         }));
     }
-    case "invoices": {
+    case "invoice": {
       const usedInvoicesData = data as InvoicesData;
 
       return Object.values(usedInvoicesData)
         .flat()
         .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
         .map(item => ({
-          date: item.DueDate.toLocaleDateString("cs-CZ"),
-          actual: item.AmountCze,
+          date: `${item.DueDate.getFullYear()}-${String(
+            item.DueDate.getMonth() + 1
+          ).padStart(2, "0")}`,
+          actual: item.PaymentDelay ? item.PaymentDelay : 0,
+          type: "invoice",
         }));
     }
-    case "loans": {
+    case "loan": {
       const usedLoansData = data as LoansData;
 
       return Object.values(usedLoansData)
         .flat()
         .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
         .map(item => ({
-          date: item.DueDate.toLocaleDateString("cs-CZ"),
-          actual: item.Amount,
+          date: `${item.DueDate.getFullYear()}-${String(
+            item.DueDate.getMonth() + 1
+          ).padStart(2, "0")}`,
+          actual: item.Delay ? item.Delay : 0,
+          type: "loan",
         }));
     }
-    case "wages": {
+    case "wage": {
       const usedWagesData = data as WagesData;
       const monthlyValues = new Map<string, number>();
 
@@ -123,6 +153,7 @@ function getActualDataForChart(usedData: {
         .map(([date, actual]) => ({
           date,
           actual,
+          type: "wage",
         }));
     }
     default: {
@@ -132,11 +163,33 @@ function getActualDataForChart(usedData: {
   }
 }
 
-export default function PredictionChart({
+function PredictionChart({
   usedData,
   confidenceIntervals,
   statistics,
 }: ChartProps) {
+  const labels = { nameLabel: "", actualDataLabel: "stringa" };
+
+  if (usedData.type === "dph") {
+    labels.nameLabel = "Prediction DPH";
+    labels.actualDataLabel = "Actual DPH";
+  }
+
+  if (usedData.type === "invoice") {
+    labels.nameLabel = "Payment delay invoice prediciton";
+    labels.actualDataLabel = "Delay";
+  }
+
+  if (usedData.type === "loan") {
+    labels.nameLabel = "Payment delay loans prediciton";
+    labels.actualDataLabel = "Delay";
+  }
+
+  if (usedData.type === "wage") {
+    labels.nameLabel = "Wage prediciton";
+    labels.actualDataLabel = "Base amount";
+  }
+
   const chartData = useMemo<ChartData[] | undefined>(() => {
     /* * usedData.data: * * { * "2024": [...], * "2025": [...], * "2026": [...] * } * * Proto jednotlivé roky spojíme do jednoho pole. */
     const actualData = getActualDataForChart(usedData);
@@ -151,7 +204,18 @@ export default function PredictionChart({
 
     if (!actualData) {
       return undefined;
-    } else return [...actualData, ...predictionData];
+    }
+
+    return [
+      ...actualData.map(item => ({
+        ...item,
+        type: usedData.type,
+      })),
+      ...predictionData.map(item => ({
+        ...item,
+        type: usedData.type,
+      })),
+    ];
   }, [usedData, confidenceIntervals]);
 
   return (
@@ -177,8 +241,7 @@ export default function PredictionChart({
           <Flex justifyContent="space-between" alignItems="center" width="100%">
             {" "}
             <Text textStyle="xl" color="fg.normalContrast">
-              {" "}
-              Predikce DPH{" "}
+              {labels.nameLabel}
             </Text>{" "}
             <Flex gap={5}>
               {" "}
@@ -237,11 +300,7 @@ export default function PredictionChart({
               <YAxis
                 width={110}
                 tickFormatter={value =>
-                  `${value.toLocaleString("cs-CZ")} ${
-                    usedData.type === "wages" || usedData.type === "dph"
-                      ? "Kč"
-                      : ""
-                  }`
+                  `${value.toLocaleString("cs-CZ")} ${usedData.type === "dph" || usedData.type === "wage" ? "Kč" : ""}`
                 }
                 tick={{ fill: "var(--chakra-colors-fg-medium-contrast)" }}
                 axisLine={false}
@@ -253,37 +312,37 @@ export default function PredictionChart({
                 content={<CustomTooltip />}
                 cursor={{ stroke: "var(--chakra-colors-border)" }}
               />{" "}
-              {/* skutečná data */}{" "}
+              {/* Actual data */}{" "}
               <Line
                 type="linear"
-                name="Skutečná DPH"
-                dataKey="actual"
+                name={labels.actualDataLabel}
+                dataKey={"actual"}
                 stroke="var(--chakra-colors-green-solid)"
                 strokeWidth={2}
                 dot={false}
               />{" "}
-              {/* predikce */}{" "}
+              {/* Prediction */}{" "}
               <Line
                 type="linear"
-                name="Predikce"
+                name="Prediction"
                 dataKey="prediction"
                 stroke="var(--chakra-colors-blue-solid)"
                 strokeWidth={2}
                 dot={false}
               />{" "}
-              {/* dolní hranice intervalu */}{" "}
+              {/* Lower bound of the interval */}{" "}
               <Line
                 type="linear"
-                name="Dolní mez"
+                name="Lower bound"
                 dataKey="lowerBound"
                 stroke="var(--chakra-colors-border)"
                 strokeDasharray="5 5"
                 dot={false}
               />{" "}
-              {/* horní hranice intervalu */}{" "}
+              {/* Upper bound of the interval */}{" "}
               <Line
                 type="linear"
-                name="Horní mez"
+                name="Upper bound"
                 dataKey="upperBound"
                 stroke="var(--chakra-colors-border)"
                 strokeDasharray="5 5"
@@ -297,18 +356,18 @@ export default function PredictionChart({
   );
 }
 
-export const ChartComp = ({
+const ChartComp = ({
   usedData,
   confidenceIntervals,
   statistics,
 }: ChartProps) => {
-  return usedData && (usedData.data !== null || usedData.data !== undefined) ? (
+  return (
     <PredictionChart
       usedData={usedData}
       confidenceIntervals={confidenceIntervals}
       statistics={statistics}
     />
-  ) : (
-    <Text>Missing data for graph</Text>
   );
 };
+
+export default ChartComp;

@@ -3,7 +3,7 @@
 import { IterationsKmeansData } from "@/zod-schemas";
 import { Box, Button, Heading, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { GridWagesDataComponent } from "./gridsComp";
+import { GridKmeansDataComponent, GridWagesDataComponent } from "./gridsComp";
 
 type IterationsWageComponentProps = {
   data: IterationsKmeansData;
@@ -100,15 +100,22 @@ const IterationsWageComponent = ({ data }: IterationsWageComponentProps) => {
           )}
         </Box>
         <Box>
+          <Heading as="h2" size="lg" mb={3} textAlign={"center"}>
+            Cluster data
+          </Heading>
           <GridWagesDataComponent
             wageData={data[iteration].clusteredData[key]}
             itemsPerPage={6}
           />
         </Box>
         <Box>
-          {data[iteration].values.map((item, index) => (
-            <Box key={index}>sss</Box>
-          ))}
+          <Heading as="h2" size="lg" mb={3} textAlign={"center"}>
+            K-means iteration data
+          </Heading>
+          <GridKmeansDataComponent
+            data={data[iteration].values}
+            itemsPerPage={6}
+          />
         </Box>
       </Box>
     </Box>

@@ -8,6 +8,7 @@ type DphTableProps = {
   years: string[] | null;
   dataWithYears: DphData | null;
   monthData: MonthData | null;
+  valueType: "percent" | "currency";
 };
 
 function getMedianAndAvg(values: number[]) {
@@ -26,7 +27,12 @@ function getMedianAndAvg(values: number[]) {
   return { median, avg };
 }
 
-const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
+const DphTableComp = ({
+  years,
+  dataWithYears,
+  monthData,
+  valueType,
+}: DphTableProps) => {
   const [year, setYearState] = useState<string | null>(
     years != null ? years[0] : null
   );
@@ -37,6 +43,8 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
       : monthData
         ? getMedianAndAvg(monthData.map(item => item.dph_val))
         : null;
+
+  const unit = valueType === "currency" ? "Kč" : "%";
 
   return (
     <Box>
@@ -71,7 +79,7 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
               <Table.ColumnHeader>Year</Table.ColumnHeader>
               <Table.ColumnHeader>Month</Table.ColumnHeader>
               <Table.ColumnHeader>Day</Table.ColumnHeader>
-              <Table.ColumnHeader>Value</Table.ColumnHeader>
+              <Table.ColumnHeader>Amount</Table.ColumnHeader>
               <Table.ColumnHeader>Avarage value of month</Table.ColumnHeader>
               <Table.ColumnHeader>Median value of month</Table.ColumnHeader>
             </Table.Row>
@@ -87,7 +95,9 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
                       <Table.Cell>{item.date_val.getFullYear()}</Table.Cell>
                       <Table.Cell>{item.date_val.getMonth() + 1}</Table.Cell>
                       <Table.Cell>{item.date_val.getDate()}</Table.Cell>
-                      <Table.Cell>{item.dph_val}</Table.Cell>
+                      <Table.Cell>
+                        {item.dph_val} {unit}
+                      </Table.Cell>
 
                       {isFirstRow && (
                         <>
@@ -95,14 +105,14 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
                             rowSpan={dataWithYears[year].length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}
+                            {avgAndMedian.avg} {unit}
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataWithYears[year].length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}
+                            {avgAndMedian.median} {unit}
                           </Table.Cell>
                         </>
                       )}
@@ -119,7 +129,9 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
                       <Table.Cell>{item.date_val.getFullYear()}</Table.Cell>
                       <Table.Cell>{item.date_val.getMonth() + 1}</Table.Cell>
                       <Table.Cell>{item.date_val.getDate()}</Table.Cell>
-                      <Table.Cell>{item.dph_val}</Table.Cell>
+                      <Table.Cell>
+                        {item.dph_val} {unit}
+                      </Table.Cell>
 
                       {isFirstRow && (
                         <>
@@ -127,14 +139,14 @@ const DphTableComp = ({ years, dataWithYears, monthData }: DphTableProps) => {
                             rowSpan={monthData.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}
+                            {avgAndMedian.avg} {unit}
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={monthData.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}
+                            {avgAndMedian.median} {unit}
                           </Table.Cell>
                         </>
                       )}
