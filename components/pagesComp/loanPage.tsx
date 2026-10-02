@@ -7,6 +7,7 @@ import { House } from "lucide-react";
 import Link from "next/link";
 import ChartComp from "../chartComp";
 import LoanTableComp from "../tablesComp/loanTableCom";
+import PredictionLoanMethodsComponents from "../graphsLoanComp";
 
 type LoanPageProps = {
   data:
@@ -18,7 +19,7 @@ type LoanPageProps = {
     | undefined;
 };
 
-export default function LoanPage({ data }: LoanPageProps) {
+const LoanPage = ({ data }: LoanPageProps) => {
   const loanDelayPrediction = data; // zatim ok
 
   return (
@@ -38,7 +39,7 @@ export default function LoanPage({ data }: LoanPageProps) {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly delay (Loans) Graph
+              Monthly delay (Loans) prediction Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -61,6 +62,22 @@ export default function LoanPage({ data }: LoanPageProps) {
             <Text>Missing data for graph</Text>
           )}
         </Box>
+        <Box>
+          <Heading as="h2" size="lg" mb={8} textAlign="center">
+            Graps for comparition to prediction graph
+          </Heading>
+          <Box>
+            {loanDelayPrediction ? (
+              <PredictionLoanMethodsComponents
+                usedDataForGraph={loanDelayPrediction.usedData.data}
+                predictionsData={loanDelayPrediction.usedData.predictionsData}
+                algorithmsParams={loanDelayPrediction.usedData.algorithmsParams}
+              />
+            ) : (
+              <Text>Missing data for graphs</Text>
+            )}
+          </Box>
+        </Box>
         <Box display="flex" flexDirection="column" gap={10}>
           <Box>
             <Heading as="h1" size="lg" mb={8} textAlign="center">
@@ -71,7 +88,7 @@ export default function LoanPage({ data }: LoanPageProps) {
                 years={[
                   ...new Set(
                     loanDelayPrediction.usedData.data.map(item =>
-                      item.DueDate.getFullYear()
+                      item.dueDate.getFullYear()
                     )
                   ),
                 ].sort((a, b) => a - b)}
@@ -92,7 +109,7 @@ export default function LoanPage({ data }: LoanPageProps) {
                 years={[
                   ...new Set(
                     loanDelayPrediction.usedData.trainingData.map(item =>
-                      item.DueDate.getFullYear()
+                      item.dueDate.getFullYear()
                     )
                   ),
                 ].sort((a, b) => a - b)}
@@ -113,7 +130,7 @@ export default function LoanPage({ data }: LoanPageProps) {
                 years={[
                   ...new Set(
                     loanDelayPrediction.usedData.testData.map(item =>
-                      item.DueDate.getFullYear()
+                      item.dueDate.getFullYear()
                     )
                   ),
                 ].sort((a, b) => a - b)}
@@ -126,7 +143,6 @@ export default function LoanPage({ data }: LoanPageProps) {
             )}
           </Box>
         </Box>
-        <Box>missing</Box>
         <Box>
           <Heading as="h1" size="lg" mb={8} textAlign="center">
             Evaluation of loans prediction
@@ -177,7 +193,14 @@ export default function LoanPage({ data }: LoanPageProps) {
                   ].map(item => (
                     <Box key={item.name}>
                       <Span>
-                        {item.name}: {item.value ?? "-"}
+                        {item.name}:{" "}
+                        {item.value != null
+                          ? `${Number(item.value).toLocaleString("cs-CZ")}${
+                              item.name === "MAPE" || item.name === "MRE"
+                                ? " %"
+                                : " day/s"
+                            }`
+                          : "-"}
                       </Span>
                     </Box>
                   ))
@@ -191,4 +214,6 @@ export default function LoanPage({ data }: LoanPageProps) {
       </Box>
     </Box>
   );
-}
+};
+
+export default LoanPage;

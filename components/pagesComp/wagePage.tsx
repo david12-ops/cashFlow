@@ -16,7 +16,7 @@ type WagePageProps = {
     statistics: Statistics;
   };
 };
-export default function WagePage({ data }: WagePageProps) {
+const WagePage = ({ data }: WagePageProps) => {
   const wagePrediction = data; // zatim OK
 
   return (
@@ -169,7 +169,14 @@ export default function WagePage({ data }: WagePageProps) {
                 ].map(item => (
                   <Box key={item.name}>
                     <Span>
-                      {item.name}: {item.value ?? "-"}
+                      {item.name}:{" "}
+                      {item.value != null
+                        ? `${Number(item.value).toLocaleString("cs-CZ")}${
+                            item.name === "MAPE" || item.name === "MRE"
+                              ? " %"
+                              : " Kč"
+                          }`
+                        : "-"}
                     </Span>
                   </Box>
                 ))}
@@ -180,4 +187,6 @@ export default function WagePage({ data }: WagePageProps) {
       </Box>
     </Box>
   );
-}
+};
+
+export default WagePage;

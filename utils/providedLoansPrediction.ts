@@ -7,7 +7,6 @@ import {
   IntervalData,
   Statistics,
   DataForLoanPrediction,
-  PredictionsData,
   AlgorithmsParams,
 } from "@/zod-schemas";
 import {
@@ -23,15 +22,15 @@ function prepareLoanData(): LoansData {
   const endYear = 2025;
 
   const loans = [
-    { CreditNumber: 1200451, Amount: 3000, StartMonth: 1 },
-    { CreditNumber: 1200452, Amount: 5500, StartMonth: 3 },
-    { CreditNumber: 1200453, Amount: 4200, StartMonth: 6 },
-    { CreditNumber: 1200454, Amount: 7500, StartMonth: 9 },
-    { CreditNumber: 1200455, Amount: 12000, StartMonth: 2 },
+    { creditNumber: 1200451, amount: 3000, startMonth: 1 },
+    { creditNumber: 1200452, amount: 5500, startMonth: 3 },
+    { creditNumber: 1200453, amount: 4200, startMonth: 6 },
+    { creditNumber: 1200454, amount: 7500, startMonth: 9 },
+    { creditNumber: 1200455, amount: 12000, startMonth: 2 },
   ];
 
   for (const loan of loans) {
-    const startDate = new Date(startYear, loan.StartMonth - 1, 15);
+    const startDate = new Date(startYear, loan.startMonth - 1, 15);
 
     for (let year = startYear; year <= endYear; year++) {
       for (let month = 0; month < 12; month++) {
@@ -45,7 +44,7 @@ function prepareLoanData(): LoansData {
         // Season coefficient
         const seasonality = Math.sin((2 * Math.PI * month) / 12);
 
-        const amountCzeWithSeasonality = loan.Amount * (1 + 0.3 * seasonality);
+        const amountCzeWithSeasonality = loan.amount * (1 + 0.3 * seasonality);
 
         const paymentType = Math.random();
 
@@ -73,12 +72,12 @@ function prepareLoanData(): LoansData {
         }
 
         loanData.push({
-          CreditNumber: loan.CreditNumber,
-          PaymentNumber: paymentNumber,
-          DueDate: dueDate,
-          Delay: delay,
-          Amount: loan.Amount,
-          AmountPaid: amountPaid,
+          creditNumber: loan.creditNumber,
+          paymentNumber: paymentNumber,
+          dueDate: dueDate,
+          delay,
+          amount: loan.amount,
+          amountPaid: amountPaid,
         });
 
         paymentNumber++;
@@ -92,11 +91,11 @@ function aggregateLoansDelayByMonth(data: LoansData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
   data.forEach(item => {
-    if (item.Delay == null) {
+    if (item.delay == null) {
       return;
     }
 
-    const paymentDelayDate = new Date(item.DueDate);
+    const paymentDelayDate = new Date(item.dueDate);
 
     const key = `${paymentDelayDate.getFullYear()} - ${paymentDelayDate.getMonth()}`;
 
@@ -104,7 +103,7 @@ function aggregateLoansDelayByMonth(data: LoansData): number[] {
       monthlyValues.set(key, []);
     }
 
-    monthlyValues.get(key)!.push(item.Delay);
+    monthlyValues.get(key)!.push(item.delay);
   });
 
   return Array.from(monthlyValues.entries())
@@ -525,7 +524,7 @@ function prepareDataToAlgorithm(data: LoansData): {
 } {
   const years = [
     ...data.map(item => {
-      return item.DueDate.getFullYear();
+      return item.dueDate.getFullYear();
     }),
   ].sort((a, b) => a - b);
 
@@ -533,10 +532,10 @@ function prepareDataToAlgorithm(data: LoansData): {
   const lastYear = years[years.length - 1];
 
   const trainingData = data.filter(
-    item => item.DueDate.getFullYear() <= secondToLastYear
+    item => item.dueDate.getFullYear() <= secondToLastYear
   );
 
-  const testData = data.filter(item => item.DueDate.getFullYear() === lastYear);
+  const testData = data.filter(item => item.dueDate.getFullYear() === lastYear);
 
   return { trainingData, testData };
 }
@@ -642,45 +641,86 @@ export default function providedLoansPrediction():
     }
   );
 
-  const predictionsData: PredictionsData = [];
-  predictionsData.push(
-    {
-      model: "ses",
-      params: {
-        smoothedValues: smoothedDataBySES.smoothedValues,
-        rezidua: smoothedDataBySES.rezidua,
-      },
-      values: predictionSES,
-    },
-    {
-      model: "holt",
-      params: {
-        level: smoothedDataByHolt.level,
-        trend: smoothedDataByHolt.trend,
-        rezidua: smoothedDataByHolt.rezidua,
-      },
-      values: predictionHolt,
-    },
-    {
-      model: "holt-winter",
-      params: {
-        level: smoothedDataByHoltWinter.level,
-        trend: smoothedDataByHoltWinter.trend,
-        seasonalValues: smoothedDataByHoltWinter.seasonalValues,
-        rezidua: smoothedDataByHoltWinter.rezidua,
-      },
-      values: predictionHoltWinter,
-    }
-  );
-
   const savedUsedData = new UsedDataLoans(
     data,
     trainingData,
     testData,
     aics,
-    algorithmParams,
-    predictionsData
+    algorithmParams
   );
+
+  const bestModel = pickbestPredictionModel(aics);
+
+  let confidenceIntervals: IntervalData = [];
+
+  const sesConfidenceIntervals = computeConfidenceIntervals(
+    smoothedDataBySES.rezidua,
+    predictionSES
+  );
+
+  const holtWinterConfidenceIntervals = computeConfidenceIntervals(
+    smoothedDataByHoltWinter.rezidua,
+    predictionHoltWinter
+  );
+
+  const holtConfidenceIntervals = computeConfidenceIntervals(
+    smoothedDataByHolt.rezidua,
+    predictionHolt
+  );
+
+  if (bestModel === "holt") {
+    confidenceIntervals = holtConfidenceIntervals;
+
+    savedUsedData.setOtherPredictionsData({
+      sesModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: sesConfidenceIntervals,
+        statistics: createStatitics(aggtestData, sesConfidenceIntervals),
+      },
+      holtWinterModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: holtWinterConfidenceIntervals,
+        statistics: createStatitics(aggtestData, holtWinterConfidenceIntervals),
+      },
+      holtModel: null,
+    });
+  }
+
+  if (bestModel === "holt-winter") {
+    confidenceIntervals = holtWinterConfidenceIntervals;
+
+    savedUsedData.setOtherPredictionsData({
+      sesModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: sesConfidenceIntervals,
+        statistics: createStatitics(aggtestData, sesConfidenceIntervals),
+      },
+      holtWinterModel: null,
+      holtModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: holtConfidenceIntervals,
+        statistics: createStatitics(aggtestData, holtConfidenceIntervals),
+      },
+    });
+  }
+
+  if (bestModel === "ses") {
+    confidenceIntervals = sesConfidenceIntervals;
+
+    savedUsedData.setOtherPredictionsData({
+      sesModel: null,
+      holtWinterModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: holtWinterConfidenceIntervals,
+        statistics: createStatitics(aggtestData, holtWinterConfidenceIntervals),
+      },
+      holtModel: {
+        countOfFutureMonthsToPredict,
+        confidenceIntervals: holtConfidenceIntervals,
+        statistics: createStatitics(aggtestData, holtConfidenceIntervals),
+      },
+    });
+  }
 
   const usedData: DataForLoanPrediction = {
     data: savedUsedData.getData(),
@@ -688,51 +728,12 @@ export default function providedLoansPrediction():
     testData: savedUsedData.getTestData(),
     aics,
     algorithmsParams: savedUsedData.getAlgorithmsParams(),
-    predictionsData: {
-      countOfFutureMonthsToPredict,
-      data: savedUsedData.getPredictionsData(),
-    },
+    predictionsData: savedUsedData.getOtherPredictionsData(),
   };
 
-  const bestModel = pickbestPredictionModel(aics);
-
-  let confidenceIntervals = [];
-  switch (bestModel) {
-    case "holt":
-      confidenceIntervals = computeConfidenceIntervals(
-        smoothedDataByHolt.rezidua,
-        predictionHolt
-      );
-
-      return {
-        usedData,
-        confidenceIntervals,
-        statistics: createStatitics(aggtestData, confidenceIntervals),
-      };
-    case "holt-winter":
-      confidenceIntervals = computeConfidenceIntervals(
-        smoothedDataByHoltWinter.rezidua,
-        predictionHoltWinter
-      );
-
-      return {
-        usedData,
-        confidenceIntervals,
-        statistics: createStatitics(aggtestData, confidenceIntervals),
-      };
-    case "ses":
-      confidenceIntervals = computeConfidenceIntervals(
-        smoothedDataBySES.rezidua,
-        predictionSES
-      );
-
-      return {
-        usedData,
-        confidenceIntervals,
-        statistics: createStatitics(aggtestData, confidenceIntervals),
-      };
-    default:
-      console.error("Uknown model " + `${bestModel}`);
-      return undefined;
-  }
+  return {
+    usedData,
+    confidenceIntervals,
+    statistics: createStatitics(aggtestData, confidenceIntervals),
+  };
 }

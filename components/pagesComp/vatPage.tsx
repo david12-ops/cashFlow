@@ -2,24 +2,24 @@
 
 import ChartComp from "@/components/chartComp";
 import { GridIntervalsDataComponent } from "@/components/gridsComp";
-import DphTableComp from "@/components/tablesComp/dphTableComp";
-import { DataForDPHprediction, IntervalData, Statistics } from "@/zod-schemas";
+import VatTableComp from "@/components/tablesComp/vatTableComp";
+import { DataForVatPrediction, IntervalData, Statistics } from "@/zod-schemas";
 import { Box, Heading, IconButton, Span, Text } from "@chakra-ui/react";
 import { House } from "lucide-react";
 import Link from "next/link";
 
-type DphPageProps = {
+type VatPageProps = {
   data:
     | {
-        usedData: DataForDPHprediction;
+        usedData: DataForVatPrediction;
         confidenceIntervals: IntervalData;
         statistics: Statistics;
       }
     | undefined;
 };
 
-export default function DphPage({ data }: DphPageProps) {
-  const monthlyDPHPrediction = data;
+const VatPage = ({ data }: VatPageProps) => {
+  const monthlyVatPrediction = data;
 
   return (
     <Box
@@ -38,7 +38,7 @@ export default function DphPage({ data }: DphPageProps) {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly (DPH) Graph
+              Monthly (VAT) Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -48,14 +48,14 @@ export default function DphPage({ data }: DphPageProps) {
             </IconButton>
           </Box>
 
-          {monthlyDPHPrediction ? (
+          {monthlyVatPrediction ? (
             <ChartComp
               usedData={{
-                type: "dph",
-                data: monthlyDPHPrediction.usedData.data,
+                type: "vat",
+                data: monthlyVatPrediction.usedData.data,
               }}
-              confidenceIntervals={monthlyDPHPrediction.confidenceIntervals}
-              statistics={monthlyDPHPrediction.statistics}
+              confidenceIntervals={monthlyVatPrediction.confidenceIntervals}
+              statistics={monthlyVatPrediction.statistics}
             />
           ) : (
             <Text>Missing data for graph</Text>
@@ -66,10 +66,10 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h1" size="lg" mb={8} textAlign="center">
               Data used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction ? (
-              <DphTableComp
-                years={Object.keys(monthlyDPHPrediction.usedData.data)}
-                dataWithYears={monthlyDPHPrediction.usedData.data}
+            {monthlyVatPrediction ? (
+              <VatTableComp
+                years={Object.keys(monthlyVatPrediction.usedData.data)}
+                dataWithYears={monthlyVatPrediction.usedData.data}
                 monthData={null}
                 valueType="currency"
               />
@@ -81,10 +81,10 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h2" size="lg" mb={8} textAlign="center">
               Data (training) used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction ? (
-              <DphTableComp
-                years={Object.keys(monthlyDPHPrediction.usedData.trainingData)}
-                dataWithYears={monthlyDPHPrediction.usedData.trainingData}
+            {monthlyVatPrediction ? (
+              <VatTableComp
+                years={Object.keys(monthlyVatPrediction.usedData.trainingData)}
+                dataWithYears={monthlyVatPrediction.usedData.trainingData}
                 monthData={null}
                 valueType="currency"
               />
@@ -97,11 +97,11 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h2" size="lg" mb={8} textAlign="center">
               Data (test) used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction &&
-            monthlyDPHPrediction.usedData.testData !== null ? (
-              <DphTableComp
-                years={[monthlyDPHPrediction.usedData.testData.key]}
-                dataWithYears={monthlyDPHPrediction.usedData.testData.data}
+            {monthlyVatPrediction &&
+            monthlyVatPrediction.usedData.testData !== null ? (
+              <VatTableComp
+                years={[monthlyVatPrediction.usedData.testData.key]}
+                dataWithYears={monthlyVatPrediction.usedData.testData.data}
                 monthData={null}
                 valueType="currency"
               />
@@ -113,12 +113,12 @@ export default function DphPage({ data }: DphPageProps) {
             <Heading as="h2" size="lg" mb={8} textAlign="center">
               Data (active) used for evaluation of VAT prediction
             </Heading>
-            {monthlyDPHPrediction &&
-            monthlyDPHPrediction.usedData.activeMonth ? (
-              <DphTableComp
+            {monthlyVatPrediction &&
+            monthlyVatPrediction.usedData.activeMonth ? (
+              <VatTableComp
                 years={null}
                 dataWithYears={null}
-                monthData={monthlyDPHPrediction.usedData.activeMonth}
+                monthData={monthlyVatPrediction.usedData.activeMonth}
                 valueType="currency"
               />
             ) : (
@@ -135,11 +135,11 @@ export default function DphPage({ data }: DphPageProps) {
             of the total monthly VAT value. The table also shows the average and
             median daily VAT value for the given month.
           </Text>
-          {monthlyDPHPrediction && monthlyDPHPrediction.usedData ? (
-            <DphTableComp
+          {monthlyVatPrediction && monthlyVatPrediction.usedData ? (
+            <VatTableComp
               years={null}
               dataWithYears={null}
-              monthData={monthlyDPHPrediction.usedData.aggMonthNumbersInPercent}
+              monthData={monthlyVatPrediction.usedData.aggMonthNumbersInPercent}
               valueType="percent"
             />
           ) : (
@@ -157,10 +157,10 @@ export default function DphPage({ data }: DphPageProps) {
             justifyContent={"space-between"}
           >
             <Box>
-              {monthlyDPHPrediction ? (
+              {monthlyVatPrediction ? (
                 <GridIntervalsDataComponent
                   confidenceIntervalsData={
-                    monthlyDPHPrediction.confidenceIntervals
+                    monthlyVatPrediction.confidenceIntervals
                   }
                   itemsPerPage={6}
                   valueType="currency"
@@ -175,28 +175,35 @@ export default function DphPage({ data }: DphPageProps) {
               </Heading>
 
               <Box>
-                {monthlyDPHPrediction ? (
+                {monthlyVatPrediction ? (
                   [
                     {
                       name: "MAE",
-                      value: monthlyDPHPrediction.statistics.valueMAE,
+                      value: monthlyVatPrediction.statistics.valueMAE,
                     },
                     {
                       name: "RMSE",
-                      value: monthlyDPHPrediction.statistics.valueRMSE,
+                      value: monthlyVatPrediction.statistics.valueRMSE,
                     },
                     {
                       name: "MAPE",
-                      value: monthlyDPHPrediction.statistics.valueMAPE,
+                      value: monthlyVatPrediction.statistics.valueMAPE,
                     },
                     {
                       name: "MRE",
-                      value: monthlyDPHPrediction.statistics.valueMRE,
+                      value: monthlyVatPrediction.statistics.valueMRE,
                     },
                   ].map(item => (
                     <Box key={item.name}>
                       <Span>
-                        {item.name}: {item.value ?? "-"}
+                        {item.name}:{" "}
+                        {item.value != null
+                          ? `${Number(item.value).toLocaleString("cs-CZ")}${
+                              item.name === "MAPE" || item.name === "MRE"
+                                ? " %"
+                                : " Kč"
+                            }`
+                          : "-"}
                       </Span>
                     </Box>
                   ))
@@ -210,8 +217,6 @@ export default function DphPage({ data }: DphPageProps) {
       </Box>
     </Box>
   );
-}
+};
 
-// export default function DphPage({ data }: DphPageProps) {
-//   return <div>TEST</div>;
-// }
+export default VatPage;

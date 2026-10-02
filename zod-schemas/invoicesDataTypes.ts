@@ -1,25 +1,17 @@
 import { z } from "zod";
 
 export const InvoiceItemSchema = z.object({
-  DueDate: z.date(),
-  AmountCze: z.number(),
-  AmountPaidCze: z.number(),
-  PaymentDelay: z.number().nullable(),
+  dueDate: z.date(),
+  amountCze: z.number(),
+  amountPaidCze: z.number(),
+  paymentDelay: z.number().nullable(),
 });
 
 export const InvoicesDataSchema = z.array(InvoiceItemSchema);
 
-export const AlgorithmSESParamsSchema = z.object({
+export const AlgorithmSESDataSchema = z.object({
   alpha: z.number(),
   aic: z.number(),
-});
-
-export const PredictionSESdataSchema = z.object({
-  params: z.object({
-    smoothedValues: z.array(z.number()),
-    rezidua: z.array(z.number()),
-  }),
-  values: z.array(z.object({ date: z.string(), value: z.number() })),
 });
 
 export const DataForInvoicePredictionSchema = z.object({
@@ -27,17 +19,12 @@ export const DataForInvoicePredictionSchema = z.object({
   excludetData: InvoicesDataSchema,
   trainingData: InvoicesDataSchema,
   testData: InvoicesDataSchema,
-  algorithmParams: AlgorithmSESParamsSchema,
-  predictionsData: z.object({
-    countOfFutureMonthsToPredict: z.number(),
-    data: PredictionSESdataSchema,
-  }),
+  algorithmParams: AlgorithmSESDataSchema,
 });
 
 export type InvoiceDataItem = z.infer<typeof InvoiceItemSchema>;
 export type InvoicesData = z.infer<typeof InvoicesDataSchema>;
-export type AlgorithmSESParams = z.infer<typeof AlgorithmSESParamsSchema>;
-export type PredictionSESdata = z.infer<typeof PredictionSESdataSchema>;
+export type AlgorithmSESData = z.infer<typeof AlgorithmSESDataSchema>;
 export type DataForInvoicePrediction = z.infer<
   typeof DataForInvoicePredictionSchema
 >;

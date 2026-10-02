@@ -64,10 +64,10 @@ function prepareInvoiceData(): InvoicesData {
         }
 
         invoiceData.push({
-          DueDate: dueDate,
-          AmountCze: amountCzeWithSeasonality,
-          AmountPaidCze: amountPaid,
-          PaymentDelay: delay,
+          dueDate,
+          amountCze: amountCzeWithSeasonality,
+          amountPaidCze: amountPaid,
+          paymentDelay: delay,
         });
       }
     }
@@ -79,11 +79,11 @@ function prepareInvoiceData(): InvoicesData {
 // There can be misunderstanding. (CHECK)
 function excludeOutliers(data: InvoicesData): InvoicesData {
   const sorted = [...data].sort(
-    (a, b) => a.DueDate.getTime() - b.DueDate.getTime()
+    (a, b) => a.dueDate.getTime() - b.dueDate.getTime()
   );
 
   const firtsNotPaidInvoice = sorted.find(
-    item => item.AmountCze !== item.AmountPaidCze
+    item => item.amountCze !== item.amountPaidCze
   );
 
   if (!firtsNotPaidInvoice) {
@@ -96,7 +96,7 @@ function excludeOutliers(data: InvoicesData): InvoicesData {
   let countOfPaidInvoices = 0;
 
   for (let i = firstNotPaidInvoiceIndex + 1; i < sorted.length; i++) {
-    const isPaid = sorted[i].AmountCze === sorted[i].AmountPaidCze;
+    const isPaid = sorted[i].amountCze === sorted[i].amountPaidCze;
 
     if (isPaid) {
       countOfPaidInvoices = countOfPaidInvoices + 1;
@@ -119,11 +119,11 @@ function aggregateInvoicesPaymentDelayByMonth(data: InvoicesData): number[] {
   const monthlyValues = new Map<string, number[]>();
 
   data.forEach(item => {
-    if (item.PaymentDelay == null) {
+    if (item.paymentDelay == null) {
       return;
     }
 
-    const paymentDelayDate = new Date(item.DueDate);
+    const paymentDelayDate = new Date(item.dueDate);
 
     const key = `${paymentDelayDate.getFullYear()} - ${paymentDelayDate.getMonth()}`;
 
@@ -131,7 +131,7 @@ function aggregateInvoicesPaymentDelayByMonth(data: InvoicesData): number[] {
       monthlyValues.set(key, []);
     }
 
-    monthlyValues.get(key)!.push(item.PaymentDelay);
+    monthlyValues.get(key)!.push(item.paymentDelay);
   });
 
   return Array.from(monthlyValues.entries())
@@ -232,7 +232,7 @@ function prepareDataToAlgorithm(data: InvoicesData): {
 } {
   const years = [
     ...data.map(item => {
-      return item.DueDate.getFullYear();
+      return item.dueDate.getFullYear();
     }),
   ].sort((a, b) => a - b);
 
@@ -240,10 +240,10 @@ function prepareDataToAlgorithm(data: InvoicesData): {
   const lastYear = years[years.length - 1];
 
   const trainingData = data.filter(
-    item => item.DueDate.getFullYear() <= secondToLastYear
+    item => item.dueDate.getFullYear() <= secondToLastYear
   );
 
-  const testData = data.filter(item => item.DueDate.getFullYear() === lastYear);
+  const testData = data.filter(item => item.dueDate.getFullYear() === lastYear);
 
   return { trainingData, testData };
 }
@@ -254,11 +254,13 @@ export default function issuedInvoicesPrediction(): {
   confidenceIntervals: IntervalData;
   statistics: Statistics;
 } {
-  let data: InvoicesData = prepareInvoiceData();
+  const data: InvoicesData = prepareInvoiceData();
+
+  // let data: InvoicesData = prepareInvoiceData();
 
   const excludetData = excludeOutliers(data);
 
-  data = excludeOutliers(data);
+  // data = excludeOutliers(data);
 
   const { trainingData, testData } = prepareDataToAlgorithm(data);
 
@@ -293,13 +295,6 @@ export default function issuedInvoicesPrediction(): {
     {
       alpha: bestSESparams.bestAlpha,
       aic: bestSESparams.bestAic,
-    },
-    {
-      params: {
-        smoothedValues: smoothedDataBySES.smoothedValues,
-        rezidua: smoothedDataBySES.rezidua,
-      },
-      values: predictionSES,
     }
   );
 
@@ -309,10 +304,6 @@ export default function issuedInvoicesPrediction(): {
     trainingData: savedUsedData.getTrainingData(),
     testData: savedUsedData.getTestData(),
     algorithmParams: savedUsedData.getAlgorithmParams(),
-    predictionsData: {
-      countOfFutureMonthsToPredict,
-      data: savedUsedData.getPredictionData(),
-    },
   };
 
   return {

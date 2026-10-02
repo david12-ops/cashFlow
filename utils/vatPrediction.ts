@@ -1,24 +1,24 @@
 import {
-  DataForDPHprediction,
-  DphData,
+  DataForVatPrediction,
+  VatData,
   IntervalData,
   MonthData,
   MonthsData,
   Statistics,
 } from "../zod-schemas";
-import { UsedDPHdata } from "./classes";
+import { UsedVatData } from "./classes";
 import {
   computeConfidenceIntervals,
   createStatitics,
 } from "./statisticsFunctions";
 
-function prepareDPHData(
+function prepareVatData(
   days: number,
   period: "MONTHLY" | "QUARTERLY",
   yearsToAddBack?: number
-): DphData {
-  const monthDaysInOneYear: DphData = {};
-  const monthDaysAcrossPastYears: DphData = {};
+): VatData {
+  const monthDaysInOneYear: VatData = {};
+  const monthDaysAcrossPastYears: VatData = {};
 
   const today = new Date();
   const baseValue = 100000;
@@ -31,7 +31,7 @@ function prepareDPHData(
 
       if (!monthDaysInOneYear[keyDate]) monthDaysInOneYear[keyDate] = [];
 
-      const dph_val = computeDPHvalue(
+      const vat_val = computeVatValue(
         {
           baseValue,
           day: i,
@@ -39,7 +39,7 @@ function prepareDPHData(
         },
         date
       );
-      monthDaysInOneYear[keyDate].push({ date_val: date, dph_val: dph_val });
+      monthDaysInOneYear[keyDate].push({ date_val: date, vat_val: vat_val });
     }
 
     return monthDaysInOneYear;
@@ -47,7 +47,7 @@ function prepareDPHData(
 
   if (period === "QUARTERLY" && yearsToAddBack) {
     const lastDate = { year: 0, month: 0 };
-    const additionalDays = prepareDPHData(93, "MONTHLY") as DphData;
+    const additionalDays = prepareVatData(93, "MONTHLY") as VatData;
     const lastKey = getLastKey(additionalDays);
 
     if (!lastKey) return {};
@@ -74,7 +74,7 @@ function prepareDPHData(
           if (!monthDaysAcrossPastYears[keyDate])
             monthDaysAcrossPastYears[keyDate] = [];
 
-          const dph_val = computeDPHvalue(
+          const vat_val = computeVatValue(
             {
               baseValue,
               day,
@@ -84,7 +84,7 @@ function prepareDPHData(
           );
           monthDaysAcrossPastYears[keyDate].push({
             date_val: date,
-            dph_val: dph_val,
+            vat_val: vat_val,
           });
         }
       }
@@ -96,7 +96,7 @@ function prepareDPHData(
   return {};
 }
 
-function computeDPHvalue(
+function computeVatValue(
   valuesFortrend: {
     baseValue: number;
     day: number;
@@ -144,7 +144,7 @@ function getDaysInMonths(date: Date): number {
   return daysInMonth[date.getMonth()];
 }
 
-function getLastKey(data: DphData): string | undefined {
+function getLastKey(data: VatData): string | undefined {
   let countOfKeys = data ? Object.keys(data).length : 0;
   let lastClosedMonthKey;
   let closed = false;
@@ -189,7 +189,7 @@ function getLastKey(data: DphData): string | undefined {
 }
 
 function getMonths(
-  data: DphData,
+  data: VatData,
   period: "MONTHLY" | "QUARTERLY",
   monthlyType?: "CLOSED" | "ACTIVE",
   quarterlyType?: "PAST_YEARS" | "CURRENT_YEAR" // Need to come up with something better quarterly
@@ -257,7 +257,7 @@ function normalizedInPercent(
   const dataInPercent = averageDaysData.map(day => {
     return {
       ...day,
-      dph_val: ((day.dph_val ?? 0) / sumOfAveragedph) * 100,
+      vat_val: ((day.vat_val ?? 0) / sumOfAveragedph) * 100,
     };
   });
 
@@ -270,7 +270,7 @@ function normalizedInPercent(
   return redistributed;
 }
 
-function aggregateClosedMonthsDPHvaluesbyDay(
+function aggregateClosedMonthsVatValuesbyDay(
   closedMonths: MonthsData
 ): MonthData {
   const aggregatedData: MonthData = [];
@@ -280,13 +280,13 @@ function aggregateClosedMonthsDPHvaluesbyDay(
   for (let day = 0; day < maxDays; day++) {
     const days = closedMonths
       .map(month => month[day])
-      .filter(value => value?.dph_val != null && value.date_val != null);
+      .filter(value => value?.vat_val != null && value.date_val != null);
 
     if (days.length === 0) continue;
 
-    const sumOfDays = days.reduce((sum, day) => sum + (day.dph_val ?? 0), 0);
+    const sumOfDays = days.reduce((sum, day) => sum + (day.vat_val ?? 0), 0);
 
-    const averageDphDay = sumOfDays / days.length;
+    const averageVatDay = sumOfDays / days.length;
 
     aggregatedData.push({
       date_val: new Date(
@@ -294,7 +294,7 @@ function aggregateClosedMonthsDPHvaluesbyDay(
         days[days.length - 1].date_val.getMonth() + 1,
         days[days.length - 1].date_val.getDate()
       ),
-      dph_val: averageDphDay,
+      vat_val: averageVatDay,
     });
   }
 
@@ -311,7 +311,7 @@ function redistributeExtraDays(
 
   // Percentages on distribution
   const percentageToRedistribute = extraHistoricalDays.reduce(
-    (sum, day) => sum + day.dph_val,
+    (sum, day) => sum + day.vat_val,
     0
   );
 
@@ -332,14 +332,14 @@ function redistributeExtraDays(
     .map(day => {
       return {
         ...day,
-        dph_val: day.dph_val + percentagePerRemainingDay,
+        vat_val: day.vat_val + percentagePerRemainingDay,
       };
     });
 
   return [...pastDays, ...futureDays];
 }
 
-function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
+function aggregateMonthlyVatvaluesbyDay(data: VatData): {
   aggMonthNumbersInPercent: MonthData;
   activeMonth: MonthData;
   sumOfActiveMonth: number;
@@ -360,17 +360,17 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
       sumOfActiveMonth: 0,
     };
 
-  const sumOfdphInActiveMonth = activeMonth.reduce(
-    (sum, val) => (sum += val.dph_val),
+  const sumOfVatInActiveMonth = activeMonth.reduce(
+    (sum, val) => (sum += val.vat_val),
     0
   );
 
   const aggregatedClosedMonth =
-    aggregateClosedMonthsDPHvaluesbyDay(closedMoths);
+    aggregateClosedMonthsVatValuesbyDay(closedMoths);
 
   const normalizedsInPercent = normalizedInPercent(
     aggregatedClosedMonth,
-    aggregatedClosedMonth.reduce((sum, day) => sum + (day.dph_val ?? 0), 0),
+    aggregatedClosedMonth.reduce((sum, day) => sum + (day.vat_val ?? 0), 0),
     activeMonth.length,
     getDaysInMonths(activeMonth[0].date_val)
   );
@@ -378,14 +378,14 @@ function aggregateMonthlyDPHvaluesbyDay(data: DphData): {
   return {
     aggMonthNumbersInPercent: normalizedsInPercent,
     activeMonth: activeMonth,
-    sumOfActiveMonth: sumOfdphInActiveMonth,
+    sumOfActiveMonth: sumOfVatInActiveMonth,
   };
 }
 
 function prepareTestingData(
   lastMonthData: MonthData,
   lastKey: string
-): { key: string; data: DphData } | null {
+): { key: string; data: VatData } | null {
   const activeMonth = lastMonthData;
 
   if (!activeMonth || activeMonth.length === 0) {
@@ -400,11 +400,11 @@ function prepareTestingData(
 
   const daysOfActiveMonth = getDaysInMonths(activeDateInActiveMonth);
 
-  const newData = prepareDPHData(daysOfActiveMonth, "MONTHLY");
+  const newData = prepareVatData(daysOfActiveMonth, "MONTHLY");
 
   const generatedValues = Object.values(newData)[0];
 
-  const newMonth: DphData = {};
+  const newMonth: VatData = {};
 
   newMonth[keyDate] = [...activeMonth];
 
@@ -440,14 +440,14 @@ function prepareTestingData(
   return { key: keyDate, data: newMonth };
 }
 
-function monthlyDPHPrediction():
+function monthlyVatPrediction():
   | {
-      usedData: DataForDPHprediction;
+      usedData: DataForVatPrediction;
       confidenceIntervals: IntervalData;
       statistics: Statistics;
     }
   | undefined {
-  const data = prepareDPHData(124, "MONTHLY");
+  const data = prepareVatData(124, "MONTHLY");
 
   if (Object.values(data).some(days => days.length === 0)) {
     console.warn(
@@ -456,13 +456,13 @@ function monthlyDPHPrediction():
     return undefined;
   }
 
-  //     const firstPartValues: DphData = Object.fromEntries(
+  //     const firstPartValues: VatData = Object.fromEntries(
   //   Object.entries(data).filter(([key]) => key !== testData.key)
   // );
 
   const keysOfData = Object.keys(data);
 
-  const firstPartValues: DphData = {};
+  const firstPartValues: VatData = {};
 
   Object.entries(data).forEach(([key, value]) => {
     if (key !== keysOfData[keysOfData.length - 1]) {
@@ -487,11 +487,11 @@ function monthlyDPHPrediction():
     const trainingData = firstPartValues;
 
     const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
-      aggregateMonthlyDPHvaluesbyDay(data);
+      aggregateMonthlyVatvaluesbyDay(data);
 
     const historySumPercentage = aggMonthNumbersInPercent
       .slice(0, activeMonth.length)
-      .reduce((sum, val) => (sum += val.dph_val ?? 0), 0);
+      .reduce((sum, val) => (sum += val.vat_val ?? 0), 0);
 
     if (historySumPercentage <= 0 || sumOfActiveMonth <= 0) {
       console.warn(
@@ -500,17 +500,17 @@ function monthlyDPHPrediction():
       return undefined;
     }
 
-    const predictedDph = (sumOfActiveMonth / historySumPercentage) * 100;
+    const predictedVat = (sumOfActiveMonth / historySumPercentage) * 100;
 
     const predictedData = aggMonthNumbersInPercent.map(item => {
       return {
         date: `${item.date_val.getFullYear()}-${String(item.date_val.getMonth() + 1).padStart(2, "0")}-${String(item.date_val.getDate()).padStart(2, "0")}`,
-        value: (predictedDph / 100) * item.dph_val,
+        value: (predictedVat / 100) * item.vat_val,
       };
     });
 
     const rezidua = preparedTestData.data[preparedTestData.key].map(
-      (item, index) => item.dph_val - predictedData[index].value
+      (item, index) => item.vat_val - predictedData[index].value
     );
 
     const confidenceIntervals = computeConfidenceIntervals(
@@ -518,16 +518,16 @@ function monthlyDPHPrediction():
       predictedData
     );
 
-    const savedUsedData = new UsedDPHdata(
+    const savedUsedData = new UsedVatData(
       data,
       trainingData,
       preparedTestData,
       aggMonthNumbersInPercent,
       activeMonth,
-      predictedDph
+      predictedVat
     );
 
-    const usedData: DataForDPHprediction = {
+    const usedData: DataForVatPrediction = {
       data: savedUsedData.getData(),
       trainingData: savedUsedData.getTrainingData(),
       testData: savedUsedData.getTestData(),
@@ -540,7 +540,7 @@ function monthlyDPHPrediction():
       confidenceIntervals,
       statistics: createStatitics(
         preparedTestData.data[preparedTestData.key].map(item => {
-          return item.dph_val;
+          return item.vat_val;
         }),
         confidenceIntervals
       ),
@@ -553,14 +553,14 @@ function monthlyDPHPrediction():
   }
 }
 
-export default function dphPrediction():
+export default function vatPrediction():
   | {
-      usedData: DataForDPHprediction;
+      usedData: DataForVatPrediction;
       confidenceIntervals: IntervalData;
       statistics: Statistics;
     }
   | undefined {
-  const monthlyPrediction = monthlyDPHPrediction();
+  const monthlyPrediction = monthlyVatPrediction();
 
   if (monthlyPrediction === undefined) {
     console.warn(

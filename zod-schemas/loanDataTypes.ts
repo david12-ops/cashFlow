@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { IntervalDataSchema, StatisticsSchema } from ".";
 
 export const LoanItemSchema = z.object({
-  CreditNumber: z.number(),
-  PaymentNumber: z.number(),
-  DueDate: z.date(),
-  Delay: z.number().nullable(),
-  Amount: z.number(),
-  AmountPaid: z.number(),
+  creditNumber: z.number(),
+  paymentNumber: z.number(),
+  dueDate: z.date(),
+  delay: z.number().nullable(),
+  amount: z.number(),
+  amountPaid: z.number(),
 });
 
 export const LoansDataSchema = z.array(LoanItemSchema);
@@ -68,37 +69,29 @@ export const AlgorithmsParamsSchema = z.array(
   ])
 );
 
-export const PredictionsDataSchema = z.array(
-  z.discriminatedUnion("model", [
-    z.object({
-      model: z.literal("ses"),
-      params: z.object({
-        smoothedValues: z.array(z.number()),
-        rezidua: z.array(z.number()),
-      }),
-      values: z.array(z.object({ date: z.string(), value: z.number() })),
-    }),
-    z.object({
-      model: z.literal("holt"),
-      params: z.object({
-        level: z.number(),
-        trend: z.number(),
-        rezidua: z.array(z.number()),
-      }),
-      values: z.array(z.object({ date: z.string(), value: z.number() })),
-    }),
-    z.object({
-      model: z.literal("holt-winter"),
-      params: z.object({
-        level: z.number(),
-        trend: z.number(),
-        seasonalValues: z.array(z.number()),
-        rezidua: z.array(z.number()),
-      }),
-      values: z.array(z.object({ date: z.string(), value: z.number() })),
-    }),
-  ])
-);
+export const PredictionsDataSchema = z.object({
+  sesModel: z
+    .object({
+      countOfFutureMonthsToPredict: z.number(),
+      confidenceIntervals: IntervalDataSchema,
+      statistics: StatisticsSchema,
+    })
+    .nullable(),
+  holtModel: z
+    .object({
+      countOfFutureMonthsToPredict: z.number(),
+      confidenceIntervals: IntervalDataSchema,
+      statistics: StatisticsSchema,
+    })
+    .nullable(),
+  holtWinterModel: z
+    .object({
+      countOfFutureMonthsToPredict: z.number(),
+      confidenceIntervals: IntervalDataSchema,
+      statistics: StatisticsSchema,
+    })
+    .nullable(),
+});
 
 export const DataForLoanPredictionSchema = z.object({
   data: LoansDataSchema,
@@ -106,10 +99,7 @@ export const DataForLoanPredictionSchema = z.object({
   testData: LoansDataSchema,
   aics: AicsDataSchema,
   algorithmsParams: AlgorithmsParamsSchema,
-  predictionsData: z.object({
-    countOfFutureMonthsToPredict: z.number(),
-    data: PredictionsDataSchema,
-  }),
+  predictionsData: PredictionsDataSchema,
 });
 
 export type LoanDataItem = z.infer<typeof LoanItemSchema>;

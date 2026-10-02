@@ -1,15 +1,14 @@
 import {
   AicsData,
-  AlgorithmSESParams,
+  AlgorithmSESData,
   AlgorithmsParams,
-  DphData,
+  VatData,
   InvoicesData,
   IterationsKmeansData,
   LoansData,
   MonthData,
   PredictionClusterResults,
   PredictionsData,
-  PredictionSESdata,
   TestData,
   WagesData,
 } from "@/zod-schemas";
@@ -20,22 +19,24 @@ export class UsedDataLoans {
   private testData: LoansData = [];
   private aics: AicsData = [];
   private algorithmsParams: AlgorithmsParams = [];
-  private predictionsData: PredictionsData = [];
+  private otherPredictionsData: PredictionsData = {
+    sesModel: null,
+    holtModel: null,
+    holtWinterModel: null,
+  };
 
   constructor(
     data: LoansData,
     trainingData: LoansData,
     testData: LoansData,
     aics: AicsData,
-    algorithmsParams: AlgorithmsParams,
-    predictionsData: PredictionsData
+    algorithmsParams: AlgorithmsParams
   ) {
     this.data = data;
     this.trainingData = trainingData;
     this.testData = testData;
     this.aics = aics;
     this.algorithmsParams = algorithmsParams;
-    this.predictionsData = predictionsData;
   }
 
   public getData(): LoansData {
@@ -58,8 +59,12 @@ export class UsedDataLoans {
     return this.algorithmsParams;
   }
 
-  public getPredictionsData(): PredictionsData {
-    return this.predictionsData;
+  public getOtherPredictionsData(): PredictionsData {
+    return this.otherPredictionsData;
+  }
+
+  public setOtherPredictionsData(predictionsData: PredictionsData) {
+    this.otherPredictionsData = predictionsData;
   }
 }
 
@@ -68,29 +73,20 @@ export class UsedDataInvoices {
   private excludetData: InvoicesData = [];
   private trainingData: InvoicesData = [];
   private testData: InvoicesData = [];
-  private algorithmParams: AlgorithmSESParams = { alpha: 0, aic: 0 };
-  private predictionData: PredictionSESdata = {
-    params: {
-      smoothedValues: [],
-      rezidua: [],
-    },
-    values: [{ date: new Date().toString(), value: 0 }],
-  };
+  private algorithmParams: AlgorithmSESData = { alpha: 0, aic: 0 };
 
   constructor(
     data: InvoicesData,
     excludedData: InvoicesData,
     trainingData: InvoicesData,
     testData: InvoicesData,
-    algorithmParams: AlgorithmSESParams,
-    predictionData: PredictionSESdata
+    algorithmParams: AlgorithmSESData
   ) {
     this.data = data;
     this.excludetData = excludedData;
     this.trainingData = trainingData;
     this.testData = testData;
     this.algorithmParams = algorithmParams;
-    this.predictionData = predictionData;
   }
 
   public getData(): InvoicesData {
@@ -109,12 +105,8 @@ export class UsedDataInvoices {
     return this.testData;
   }
 
-  public getAlgorithmParams(): AlgorithmSESParams {
+  public getAlgorithmParams(): AlgorithmSESData {
     return this.algorithmParams;
-  }
-
-  public getPredictionData(): PredictionSESdata {
-    return this.predictionData;
   }
 }
 
@@ -167,38 +159,38 @@ export class UsedDataWages {
   }
 }
 
-export class UsedDPHdata {
-  private data: DphData = {};
-  private trainingData: DphData = {};
+export class UsedVatData {
+  private data: VatData = {};
+  private trainingData: VatData = {};
   private testData: TestData = {
     key: "",
     data: {},
   };
   private aggMonthNumbersInPercent: MonthData = [];
   private activeMonth: MonthData = [];
-  private predictedDph: number = 0;
+  private predictedVat: number = 0;
 
   constructor(
-    data: DphData,
-    trainingData: DphData,
+    data: VatData,
+    trainingData: VatData,
     testData: TestData,
     aggMonthNumbersInPercent: MonthData,
     activeMonth: MonthData,
-    predictedDph: number
+    predictedVat: number
   ) {
     this.data = data;
     this.trainingData = trainingData;
     this.testData = testData;
     this.aggMonthNumbersInPercent = aggMonthNumbersInPercent;
     this.activeMonth = activeMonth;
-    this.predictedDph = predictedDph;
+    this.predictedVat = predictedVat;
   }
 
-  public getData(): DphData {
+  public getData(): VatData {
     return this.data;
   }
 
-  public getTrainingData(): DphData {
+  public getTrainingData(): VatData {
     return this.trainingData;
   }
 
@@ -214,7 +206,7 @@ export class UsedDPHdata {
     return this.activeMonth;
   }
 
-  public getPredictedDph(): number {
-    return this.predictedDph;
+  public getPredictedVat(): number {
+    return this.predictedVat;
   }
 }

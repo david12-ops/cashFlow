@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import {
-  DphData,
+  VatData,
   IntervalData,
   InvoicesData,
   LoansData,
@@ -22,8 +22,8 @@ import {
 
 type ChartProps = {
   usedData: {
-    data: DphData | InvoicesData | LoansData | WagesData;
-    type: "invoice" | "loan" | "wage" | "dph";
+    data: VatData | InvoicesData | LoansData | WagesData;
+    type: "invoice" | "loan" | "wage" | "vat";
   };
 
   confidenceIntervals: IntervalData;
@@ -32,7 +32,7 @@ type ChartProps = {
 
 type ChartData = {
   date: string;
-  type: "dph" | "invoice" | "loan" | "wage";
+  type: "vat" | "invoice" | "loan" | "wage";
   actual?: number;
   prediction?: number;
   lowerBound?: number;
@@ -48,7 +48,7 @@ type CustomTooltipProps = {
     payload?: {
       date?: string;
       actual?: number;
-      type?: "dph" | "invoice" | "loan" | "wage";
+      type?: "vat" | "invoice" | "loan" | "wage";
     };
   }[];
   label?: string;
@@ -64,11 +64,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
       <p>Date: {label}</p>
 
       {payload.map(item => {
-        console.log("plaYLOAD " + JSON.stringify(payload));
         const type = item.payload?.type;
 
         const unit =
-          type === "dph" || type === "wage"
+          type === "vat" || type === "wage"
             ? " Kč"
             : type === "invoice" || type === "loan"
               ? " Days"
@@ -85,16 +84,16 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 function getActualDataForChart(usedData: {
-  data: DphData | InvoicesData | LoansData | WagesData;
-  type: "invoice" | "loan" | "wage" | "dph";
+  data: VatData | InvoicesData | LoansData | WagesData;
+  type: "invoice" | "loan" | "wage" | "vat";
 }): ChartData[] | undefined {
   const { data, type } = usedData;
 
   switch (type) {
-    case "dph": {
-      const usedDphData = data as DphData;
+    case "vat": {
+      const usedVatData = data as VatData;
 
-      return Object.values(usedDphData)
+      return Object.values(usedVatData)
         .flat()
         .sort((a, b) => a.date_val.getTime() - b.date_val.getTime())
         .map(item => ({
@@ -104,8 +103,8 @@ function getActualDataForChart(usedData: {
             2,
             "0"
           )}-${String(item.date_val.getDate()).padStart(2, "0")}`,
-          actual: item.dph_val,
-          type: "dph",
+          actual: item.vat_val,
+          type: "vat",
         }));
     }
     case "invoice": {
@@ -113,12 +112,12 @@ function getActualDataForChart(usedData: {
 
       return Object.values(usedInvoicesData)
         .flat()
-        .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
         .map(item => ({
-          date: `${item.DueDate.getFullYear()}-${String(
-            item.DueDate.getMonth() + 1
+          date: `${item.dueDate.getFullYear()}-${String(
+            item.dueDate.getMonth() + 1
           ).padStart(2, "0")}`,
-          actual: item.PaymentDelay ? item.PaymentDelay : 0,
+          actual: item.paymentDelay ? item.paymentDelay : 0,
           type: "invoice",
         }));
     }
@@ -127,12 +126,12 @@ function getActualDataForChart(usedData: {
 
       return Object.values(usedLoansData)
         .flat()
-        .sort((a, b) => a.DueDate.getTime() - b.DueDate.getTime())
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
         .map(item => ({
-          date: `${item.DueDate.getFullYear()}-${String(
-            item.DueDate.getMonth() + 1
+          date: `${item.dueDate.getFullYear()}-${String(
+            item.dueDate.getMonth() + 1
           ).padStart(2, "0")}`,
-          actual: item.Delay ? item.Delay : 0,
+          actual: item.delay ? item.delay : 0,
           type: "loan",
         }));
     }
@@ -170,9 +169,9 @@ function PredictionChart({
 }: ChartProps) {
   const labels = { nameLabel: "", actualDataLabel: "stringa" };
 
-  if (usedData.type === "dph") {
-    labels.nameLabel = "Prediction DPH";
-    labels.actualDataLabel = "Actual DPH";
+  if (usedData.type === "vat") {
+    labels.nameLabel = "Prediction VAT";
+    labels.actualDataLabel = "Actual VAT";
   }
 
   if (usedData.type === "invoice") {
@@ -246,26 +245,36 @@ function PredictionChart({
             <Flex gap={5}>
               {" "}
               <Text fontSize="sm">
-                {" "}
-                MAE: {statistics.valueMAE.toFixed(2)}{" "}
-              </Text>{" "}
+                MAE:{" "}
+                {statistics.valueMAE.toLocaleString("cs-CZ", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                {usedData.type === "vat" || usedData.type === "wage"
+                  ? "Kč"
+                  : "day/s"}
+              </Text>
               <Text fontSize="sm">
-                {" "}
-                RMSE: {statistics.valueRMSE.toFixed(2)}{" "}
-              </Text>{" "}
+                RMSE:{" "}
+                {statistics.valueRMSE.toLocaleString("cs-CZ", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                {usedData.type === "vat" || usedData.type === "wage"
+                  ? "Kč"
+                  : "day/s"}
+              </Text>
               <Text fontSize="sm">
-                {" "}
                 MAPE:{" "}
                 {statistics.valueMAPE !== null
                   ? `${statistics.valueMAPE.toFixed(2)} %`
-                  : "-"}{" "}
-              </Text>{" "}
+                  : "-"}
+              </Text>
               <Text fontSize="sm">
-                {" "}
                 MRE:{" "}
                 {statistics.valueMRE !== null
                   ? `${statistics.valueMRE.toFixed(2)} %`
-                  : "-"}{" "}
+                  : "-"}
               </Text>{" "}
             </Flex>{" "}
           </Flex>{" "}
@@ -300,7 +309,7 @@ function PredictionChart({
               <YAxis
                 width={110}
                 tickFormatter={value =>
-                  `${value.toLocaleString("cs-CZ")} ${usedData.type === "dph" || usedData.type === "wage" ? "Kč" : ""}`
+                  `${value.toLocaleString("cs-CZ")} ${usedData.type === "vat" || usedData.type === "wage" ? "Kč" : ""}`
                 }
                 tick={{ fill: "var(--chakra-colors-fg-medium-contrast)" }}
                 axisLine={false}

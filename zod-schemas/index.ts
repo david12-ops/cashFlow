@@ -1,5 +1,5 @@
 import { z } from "zod";
-export * from "./dphDataTypes";
+export * from "./vatDataTypes";
 export * from "./invoicesDataTypes";
 export * from "./loanDataTypes";
 export * from "./wageDataTypes";

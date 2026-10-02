@@ -1,12 +1,12 @@
 "use client";
 
-import { DphData, MonthData } from "@/zod-schemas";
+import { VatData, MonthData } from "@/zod-schemas";
 import { Box, Button, Table } from "@chakra-ui/react";
 import { useState } from "react";
 
-type DphTableProps = {
+type VatTableProps = {
   years: string[] | null;
-  dataWithYears: DphData | null;
+  dataWithYears: VatData | null;
   monthData: MonthData | null;
   valueType: "percent" | "currency";
 };
@@ -27,21 +27,21 @@ function getMedianAndAvg(values: number[]) {
   return { median, avg };
 }
 
-const DphTableComp = ({
+const VatTableComp = ({
   years,
   dataWithYears,
   monthData,
   valueType,
-}: DphTableProps) => {
+}: VatTableProps) => {
   const [year, setYearState] = useState<string | null>(
     years != null ? years[0] : null
   );
 
   const avgAndMedian =
     year != null && dataWithYears != null
-      ? getMedianAndAvg(dataWithYears[year].map(item => item.dph_val))
+      ? getMedianAndAvg(dataWithYears[year].map(item => item.vat_val))
       : monthData
-        ? getMedianAndAvg(monthData.map(item => item.dph_val))
+        ? getMedianAndAvg(monthData.map(item => item.vat_val))
         : null;
 
   const unit = valueType === "currency" ? "Kč" : "%";
@@ -96,7 +96,7 @@ const DphTableComp = ({
                       <Table.Cell>{item.date_val.getMonth() + 1}</Table.Cell>
                       <Table.Cell>{item.date_val.getDate()}</Table.Cell>
                       <Table.Cell>
-                        {item.dph_val} {unit}
+                        {item.vat_val} {unit}
                       </Table.Cell>
 
                       {isFirstRow && (
@@ -130,7 +130,7 @@ const DphTableComp = ({
                       <Table.Cell>{item.date_val.getMonth() + 1}</Table.Cell>
                       <Table.Cell>{item.date_val.getDate()}</Table.Cell>
                       <Table.Cell>
-                        {item.dph_val} {unit}
+                        {item.vat_val} {unit}
                       </Table.Cell>
 
                       {isFirstRow && (
@@ -160,4 +160,4 @@ const DphTableComp = ({
   );
 };
 
-export default DphTableComp;
+export default VatTableComp;

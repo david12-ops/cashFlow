@@ -71,7 +71,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
   const [page, setPageState] = useState<number>(1);
 
   const dataOfTheYear = data.filter(
-    item => item.DueDate.getFullYear() === year
+    item => item.dueDate.getFullYear() === year
   );
 
   const handleButtonClick = () => {
@@ -83,7 +83,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
   };
 
   const avgAndMedian = getMedianAndAvg(
-    dataOfTheYear.map(item => (item.Delay ? item.Delay : 0))
+    dataOfTheYear.map(item => (item.delay ? item.delay : 0))
   );
   const { pagesCount, pageData } = dataByPage(dataOfTheYear, itemsPerPage);
 
@@ -135,18 +135,18 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
 
                   return (
                     <Table.Row key={index}>
-                      <Table.Cell>{item.CreditNumber}</Table.Cell>
-                      <Table.Cell>{item.PaymentNumber}</Table.Cell>
+                      <Table.Cell>{item.creditNumber}</Table.Cell>
+                      <Table.Cell>{item.paymentNumber}</Table.Cell>
                       <Table.Cell>
-                        {item.DueDate.toLocaleDateString("cs-CZ")}
+                        {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
                       <Table.Cell>
-                        {item.Delay
-                          ? `${item.Delay} ${item.Delay > 1 ? "days" : "day"}`
+                        {item.delay
+                          ? `${item.delay} ${item.delay > 1 ? "days" : "day"}`
                           : "Without delay"}
                       </Table.Cell>
-                      <Table.Cell>{item.Amount} Kč</Table.Cell>
-                      <Table.Cell>{item.AmountPaid} Kč</Table.Cell>
+                      <Table.Cell>{item.amount} Kč</Table.Cell>
+                      <Table.Cell>{item.amountPaid} Kč</Table.Cell>
 
                       {isFirstRow && (
                         <>
@@ -154,7 +154,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg} $
+                            {avgAndMedian.avg}{" "}
                             {avgAndMedian.avg > 1 ? "days" : "day"}
                           </Table.Cell>
 
@@ -175,18 +175,18 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
 
                   return (
                     <Table.Row key={index}>
-                      <Table.Cell>{item.CreditNumber}</Table.Cell>
-                      <Table.Cell>{item.PaymentNumber}</Table.Cell>
+                      <Table.Cell>{item.creditNumber}</Table.Cell>
+                      <Table.Cell>{item.paymentNumber}</Table.Cell>
                       <Table.Cell>
-                        {item.DueDate.toLocaleDateString("cs-CZ")}
+                        {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
                       <Table.Cell>
-                        {item.Delay
-                          ? `${item.Delay} ${item.Delay > 1 ? "days" : "day"}`
+                        {item.delay
+                          ? `${item.delay} ${item.delay > 1 ? "days" : "day"}`
                           : "Without delay"}
                       </Table.Cell>
-                      <Table.Cell>{item.Amount} Kč</Table.Cell>
-                      <Table.Cell>{item.AmountPaid} Kč</Table.Cell>
+                      <Table.Cell>{item.amount} Kč</Table.Cell>
+                      <Table.Cell>{item.amountPaid} Kč</Table.Cell>
 
                       {isFirstRow && (
                         <>
@@ -194,7 +194,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg} $
+                            {avgAndMedian.avg}{" "}
                             {avgAndMedian.avg > 1 ? "days" : "day"}
                           </Table.Cell>
 

@@ -21,8 +21,13 @@ type InvoicePageProps = {
   };
 };
 
-export default function InvoicePage({ data }: InvoicePageProps) {
+const InvoicePage = ({ data }: InvoicePageProps) => {
   const invoicePaymentDelayPrediction = data; // nenei ok
+
+  console.log(
+    "excluded data " +
+      invoicePaymentDelayPrediction.usedData.excludetData.length
+  );
 
   return (
     <Box
@@ -72,7 +77,7 @@ export default function InvoicePage({ data }: InvoicePageProps) {
               years={[
                 ...new Set(
                   invoicePaymentDelayPrediction.usedData.data.map(item =>
-                    item.DueDate.getFullYear()
+                    item.dueDate.getFullYear()
                   )
                 ),
               ].sort((a, b) => a - b)}
@@ -90,13 +95,20 @@ export default function InvoicePage({ data }: InvoicePageProps) {
               years={[
                 ...new Set(
                   invoicePaymentDelayPrediction.usedData.excludetData.map(
-                    item => item.DueDate.getFullYear()
+                    item => item.dueDate.getFullYear()
                   )
                 ),
               ].sort((a, b) => a - b)}
               data={invoicePaymentDelayPrediction.usedData.excludetData}
               type="all"
-              itemsPerPage={30}
+              itemsPerPage={
+                invoicePaymentDelayPrediction.usedData.excludetData.length > 30
+                  ? 30
+                  : Math.ceil(
+                      invoicePaymentDelayPrediction.usedData.excludetData
+                        .length / 3
+                    )
+              }
             />
           </Box>
           <Box>
@@ -108,7 +120,7 @@ export default function InvoicePage({ data }: InvoicePageProps) {
               years={[
                 ...new Set(
                   invoicePaymentDelayPrediction.usedData.trainingData.map(
-                    item => item.DueDate.getFullYear()
+                    item => item.dueDate.getFullYear()
                   )
                 ),
               ].sort((a, b) => a - b)}
@@ -126,7 +138,7 @@ export default function InvoicePage({ data }: InvoicePageProps) {
               years={[
                 ...new Set(
                   invoicePaymentDelayPrediction.usedData.testData.map(item =>
-                    item.DueDate.getFullYear()
+                    item.dueDate.getFullYear()
                   )
                 ),
               ].sort((a, b) => a - b)}
@@ -136,7 +148,25 @@ export default function InvoicePage({ data }: InvoicePageProps) {
             />
           </Box>
         </Box>
-        <Box>missing</Box>
+        <Box>
+          <Heading as="h3" size="lg" mb={8} textAlign="center">
+            <Text>Prediciton AIC and best Alpa for SES model</Text>
+          </Heading>
+          <Box>
+            <Text textAlign={"center"} fontWeight="bold">
+              Alpha
+            </Text>
+            <Text textAlign={"center"}>
+              {invoicePaymentDelayPrediction.usedData.algorithmParams.alpha}
+            </Text>
+            <Text textAlign={"center"} fontWeight="bold">
+              AIC
+            </Text>
+            <Text textAlign={"center"}>
+              {invoicePaymentDelayPrediction.usedData.algorithmParams.aic}
+            </Text>
+          </Box>
+        </Box>
         <Box>
           <Heading as="h1" size="lg" mb={8} textAlign="center">
             Evaluation of invoices prediction
@@ -187,7 +217,14 @@ export default function InvoicePage({ data }: InvoicePageProps) {
                   ].map(item => (
                     <Box key={item.name}>
                       <Span>
-                        {item.name}: {item.value ?? "-"}
+                        {item.name}:{" "}
+                        {item.value != null
+                          ? `${Number(item.value).toLocaleString("cs-CZ")}${
+                              item.name === "MAPE" || item.name === "MRE"
+                                ? " %"
+                                : " day/s"
+                            }`
+                          : "-"}
                       </Span>
                     </Box>
                   ))
@@ -201,4 +238,6 @@ export default function InvoicePage({ data }: InvoicePageProps) {
       </Box>
     </Box>
   );
-}
+};
+
+export default InvoicePage;

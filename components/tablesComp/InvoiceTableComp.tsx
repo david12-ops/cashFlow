@@ -76,7 +76,7 @@ const InvoiceTableComp = ({
   const [page, setPageState] = useState<number>(1);
 
   const dataOfTheYear = data.filter(
-    item => item.DueDate.getFullYear() === year
+    item => item.dueDate.getFullYear() === year
   );
 
   const handleButtonClick = () => {
@@ -88,7 +88,7 @@ const InvoiceTableComp = ({
   };
 
   const avgAndMedian = getMedianAndAvg(
-    dataOfTheYear.map(item => (item.PaymentDelay ? item.PaymentDelay : 0))
+    dataOfTheYear.map(item => (item.paymentDelay ? item.paymentDelay : 0))
   );
   const { pagesCount, pageData } = dataByPage(dataOfTheYear, itemsPerPage);
 
@@ -144,13 +144,13 @@ const InvoiceTableComp = ({
                   return (
                     <Table.Row key={index}>
                       <Table.Cell>
-                        {item.DueDate.toLocaleDateString("cs-CZ")}
+                        {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
-                      <Table.Cell>{item.AmountCze} Kč</Table.Cell>
-                      <Table.Cell>{item.AmountPaidCze} Kč</Table.Cell>
+                      <Table.Cell>{item.amountCze} Kč</Table.Cell>
+                      <Table.Cell>{item.amountPaidCze} Kč</Table.Cell>
                       <Table.Cell>
-                        {item.PaymentDelay
-                          ? `${item.PaymentDelay} ${item.PaymentDelay > 1 ? "days" : "day"}`
+                        {item.paymentDelay
+                          ? `${item.paymentDelay} ${item.paymentDelay > 1 ? "days" : "day"}`
                           : "Without delay"}
                       </Table.Cell>
 
@@ -160,7 +160,7 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg} $
+                            {avgAndMedian.avg}{" "}
                             {avgAndMedian.avg > 1 ? "days" : "day"}
                           </Table.Cell>
 
@@ -168,7 +168,7 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median} $
+                            {avgAndMedian.median}{" "}
                             {avgAndMedian.median > 1 ? "days" : "day"}
                           </Table.Cell>
                         </>
@@ -182,13 +182,13 @@ const InvoiceTableComp = ({
                   return (
                     <Table.Row key={index}>
                       <Table.Cell>
-                        {item.DueDate.toLocaleDateString("cs-CZ")}
+                        {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
-                      <Table.Cell>{item.AmountCze} Kč</Table.Cell>
-                      <Table.Cell>{item.AmountPaidCze} Kč</Table.Cell>
+                      <Table.Cell>{item.amountCze} Kč</Table.Cell>
+                      <Table.Cell>{item.amountPaidCze} Kč</Table.Cell>
                       <Table.Cell>
-                        {item.PaymentDelay
-                          ? `${item.PaymentDelay} ${item.PaymentDelay > 1 ? "days" : "day"}`
+                        {item.paymentDelay
+                          ? `${item.paymentDelay} ${item.paymentDelay > 1 ? "days" : "day"}`
                           : "Without delay"}
                       </Table.Cell>
 
@@ -198,7 +198,7 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg} $
+                            {avgAndMedian.avg}{" "}
                             {avgAndMedian.avg > 1 ? "days" : "day"}
                           </Table.Cell>
 
@@ -206,7 +206,7 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median} $
+                            {avgAndMedian.median}{" "}
                             {avgAndMedian.median > 1 ? "days" : "day"}
                           </Table.Cell>
                         </>
