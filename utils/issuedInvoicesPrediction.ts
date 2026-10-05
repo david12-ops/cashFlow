@@ -218,7 +218,7 @@ function sesPrediction(
     const date = new Date(year, month + i);
 
     predictionData.push({
-      date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
       value: lastSmoothedValue,
     });
   }
@@ -230,11 +230,13 @@ function prepareDataToAlgorithm(data: InvoicesData): {
   trainingData: InvoicesData;
   testData: InvoicesData;
 } {
-  const years = [
-    ...data.map(item => {
-      return item.dueDate.getFullYear();
-    }),
-  ].sort((a, b) => a - b);
+  const years = Array.from(
+    new Set([
+      ...data.map(item => {
+        return item.dueDate.getFullYear();
+      }),
+    ])
+  ).sort((a, b) => a - b);
 
   const secondToLastYear = years[years.length - 2];
   const lastYear = years[years.length - 1];
@@ -248,7 +250,7 @@ function prepareDataToAlgorithm(data: InvoicesData): {
   return { trainingData, testData };
 }
 
-//Check jako hoodne
+// Check jako hoodne
 export default function issuedInvoicesPrediction(): {
   usedData: DataForInvoicePrediction;
   confidenceIntervals: IntervalData;
@@ -264,10 +266,15 @@ export default function issuedInvoicesPrediction(): {
 
   const { trainingData, testData } = prepareDataToAlgorithm(data);
 
+  const trainingDates = trainingData.map(item => item.dueDate);
+  const sortedTrainingDates = [...trainingDates].sort(
+    (a, b) => a.getTime() - b.getTime()
+  );
+
   const aggtrainingData = aggregateInvoicesPaymentDelayByMonth(trainingData);
   const aggtestData = aggregateInvoicesPaymentDelayByMonth(testData);
 
-  const countOfFutureMonthsToPredict = 6;
+  const countOfFutureMonthsToPredict = 12;
 
   // SES
   const bestSESparams = pickBestAlphaByAIC(aggtrainingData);
@@ -278,7 +285,7 @@ export default function issuedInvoicesPrediction(): {
 
   const predictionSES = sesPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1),
+    sortedTrainingDates[sortedTrainingDates.length - 2],
     smoothedDataBySES
   );
 

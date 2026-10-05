@@ -150,7 +150,7 @@ const InvoiceTableComp = ({
                       <Table.Cell>{item.amountPaidCze} Kč</Table.Cell>
                       <Table.Cell>
                         {item.paymentDelay
-                          ? `${item.paymentDelay} ${item.paymentDelay > 1 ? "days" : "day"}`
+                          ? `${item.paymentDelay} day/s`
                           : "Without delay"}
                       </Table.Cell>
 
@@ -160,16 +160,14 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}{" "}
-                            {avgAndMedian.avg > 1 ? "days" : "day"}
+                            {avgAndMedian.avg} day/s
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}{" "}
-                            {avgAndMedian.median > 1 ? "days" : "day"}
+                            {avgAndMedian.median} day/s
                           </Table.Cell>
                         </>
                       )}
@@ -188,7 +186,7 @@ const InvoiceTableComp = ({
                       <Table.Cell>{item.amountPaidCze} Kč</Table.Cell>
                       <Table.Cell>
                         {item.paymentDelay
-                          ? `${item.paymentDelay} ${item.paymentDelay > 1 ? "days" : "day"}`
+                          ? `${item.paymentDelay} day/s`
                           : "Without delay"}
                       </Table.Cell>
 
@@ -198,16 +196,14 @@ const InvoiceTableComp = ({
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}{" "}
-                            {avgAndMedian.avg > 1 ? "days" : "day"}
+                            {avgAndMedian.avg} day/s
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}{" "}
-                            {avgAndMedian.median > 1 ? "days" : "day"}
+                            {avgAndMedian.median} day/s
                           </Table.Cell>
                         </>
                       )}

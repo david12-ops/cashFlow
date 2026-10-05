@@ -275,7 +275,11 @@ function aggregateClosedMonthsVatValuesbyDay(
 ): MonthData {
   const aggregatedData: MonthData = [];
 
+  // tohle je spatne, zatim funguje
   const maxDays = Math.max(...closedMonths.map(month => month.length));
+  const lastClosedMonth = closedMonths
+    .flatMap(month => month)
+    .sort((a, b) => b.date_val.getTime() - a.date_val.getTime())[0];
 
   for (let day = 0; day < maxDays; day++) {
     const days = closedMonths
@@ -288,11 +292,21 @@ function aggregateClosedMonthsVatValuesbyDay(
 
     const averageVatDay = sumOfDays / days.length;
 
+    //     aggregatedData.push({
+    //       date_val: new Date(
+    //         lastClosedMonth.date_val.getFullYear(),
+    //         lastClosedMonth.date_val.getMonth() + 1,
+    //         day + 1
+    //       ),
+    //       vat_val: averageVatDay,
+    //     });
+    //   }
+
     aggregatedData.push({
       date_val: new Date(
-        days[days.length - 1].date_val.getFullYear(),
-        days[days.length - 1].date_val.getMonth() + 1,
-        days[days.length - 1].date_val.getDate()
+        lastClosedMonth.date_val.getFullYear(),
+        lastClosedMonth.date_val.getMonth(),
+        day + 1
       ),
       vat_val: averageVatDay,
     });
@@ -382,6 +396,7 @@ function aggregateMonthlyVatvaluesbyDay(data: VatData): {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function prepareTestingData(
   lastMonthData: MonthData,
   lastKey: string
@@ -447,7 +462,84 @@ function monthlyVatPrediction():
       statistics: Statistics;
     }
   | undefined {
-  const data = prepareVatData(124, "MONTHLY");
+  // This part of the code during optimization
+  //   const data = prepareVatData(124, "MONTHLY");
+
+  //   if (Object.values(data).some(days => days.length === 0)) {
+  //     console.warn(
+  //       "Some months contain no data. Prediction cannot be performed."
+  //     );
+  //     return undefined;
+  //   }
+
+  //   //     const firstPartValues: VatData = Object.fromEntries(
+  //   //   Object.entries(data).filter(([key]) => key !== testData.key)
+  //   // );
+
+  //   const keysOfData = Object.keys(data);
+
+  //   const firstPartValues: VatData = {};
+
+  //   Object.entries(data).forEach(([key, value]) => {
+  //     if (key !== keysOfData[keysOfData.length - 1]) {
+  //       firstPartValues[key] = [];
+
+  //       firstPartValues[key] = value;
+  //     }
+  //   });
+
+  //   // Last month will be the test data
+  //   const lastKey = keysOfData[keysOfData.length - 1];
+  //   const testData = data[lastKey];
+
+  //   console.log("Test Data:", testData);
+
+  //   // Its for testing data, we need to prepare the last active month, and then change the days
+  //   const preparedTestData = prepareTestingData(testData, lastKey);
+
+  //   if (
+  //     preparedTestData &&
+  //     preparedTestData.data !== null &&
+  //     preparedTestData.key
+  //   ) {
+  //     const trainingData = firstPartValues;
+
+  //     const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
+  //       aggregateMonthlyVatvaluesbyDay(data);
+
+  //     const historySumPercentage = aggMonthNumbersInPercent
+  //       .slice(0, activeMonth.length)
+  //       .reduce((sum, val) => (sum += val.vat_val ?? 0), 0);
+
+  //     if (historySumPercentage <= 0 || sumOfActiveMonth <= 0) {
+  //       console.warn(
+  //         "Historical sum or active month sum is zero or negative. Prediction cannot be performed."
+  //       );
+  //       return undefined;
+  //     }
+
+  //     const predictedVat = (sumOfActiveMonth / historySumPercentage) * 100;
+
+  //     const predictedData = aggMonthNumbersInPercent.map(item => {
+  //       return {
+  //         date: `${item.date_val.getFullYear()}-${String(item.date_val.getMonth() + 1).padStart(2, "0")}-${String(item.date_val.getDate()).padStart(2, "0")}`,
+  //         value: (predictedVat / 100) * item.vat_val,
+  //       };
+  //     });
+
+  //     // console.log("predictedData", predictedData);
+
+  //     const rezidua = preparedTestData.data[preparedTestData.key].map(
+  //       (item, index) => item.vat_val - predictedData[index].value
+  //     );
+
+  // For hard verification, work only with closed months.
+  // The method is very sensitive to date changes that the preparedTestData function triggers.
+  // In bars graph can be seen green and blue bar. The green bar is actual data, the blue bar is predicted data.
+  // There will be difference on count of predicted days and actual days. So prediction will have length by the max days in the closed months.
+  // But test data (next month) will have length by the actual days in the next month. So there will be difference in length of predicted and actual data.
+  // So the in the bar graph can be more blue bars but some blue bars will not have green bar because the day in not in test data.
+  const data = prepareVatData(186, "MONTHLY");
 
   if (Object.values(data).some(days => days.length === 0)) {
     console.warn(
@@ -465,7 +557,7 @@ function monthlyVatPrediction():
   const firstPartValues: VatData = {};
 
   Object.entries(data).forEach(([key, value]) => {
-    if (key !== keysOfData[keysOfData.length - 1]) {
+    if (key !== keysOfData[keysOfData.length - 2]) {
       firstPartValues[key] = [];
 
       firstPartValues[key] = value;
@@ -473,17 +565,11 @@ function monthlyVatPrediction():
   });
 
   // Last month will be the test data
-  const lastKey = keysOfData[keysOfData.length - 1];
-  const testData = data[lastKey];
+  const lastKey = keysOfData[keysOfData.length - 2];
+  const testData: VatData = {};
+  testData[lastKey] = data[lastKey];
 
-  // Its for testing data, we need to prepare the last active month, and then change the days
-  const preparedTestData = prepareTestingData(testData, lastKey);
-
-  if (
-    preparedTestData &&
-    preparedTestData.data !== null &&
-    preparedTestData.key
-  ) {
+  if (testData && testData[lastKey] !== null) {
     const trainingData = firstPartValues;
 
     const { aggMonthNumbersInPercent, activeMonth, sumOfActiveMonth } =
@@ -509,7 +595,7 @@ function monthlyVatPrediction():
       };
     });
 
-    const rezidua = preparedTestData.data[preparedTestData.key].map(
+    const rezidua = testData[lastKey].map(
       (item, index) => item.vat_val - predictedData[index].value
     );
 
@@ -521,7 +607,7 @@ function monthlyVatPrediction():
     const savedUsedData = new UsedVatData(
       data,
       trainingData,
-      preparedTestData,
+      { key: lastKey, data: testData },
       aggMonthNumbersInPercent,
       activeMonth,
       predictedVat
@@ -539,7 +625,7 @@ function monthlyVatPrediction():
       usedData,
       confidenceIntervals,
       statistics: createStatitics(
-        preparedTestData.data[preparedTestData.key].map(item => {
+        testData[lastKey].map(item => {
           return item.vat_val;
         }),
         confidenceIntervals

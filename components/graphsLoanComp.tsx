@@ -11,6 +11,7 @@ import ChartComp from "./chartComp";
 
 type GraphsPredictionCompProps = {
   usedDataForGraph: LoansData;
+  testDataForGraph: LoansData;
   predictionsData: PredictionsData;
   algorithmsParams: AlgorithmsParams;
 };
@@ -39,6 +40,7 @@ function createOtherPredictionsDataMap(
 
 const PredictionLoanMethodsComponents = ({
   usedDataForGraph,
+  testDataForGraph,
   predictionsData,
   algorithmsParams,
 }: GraphsPredictionCompProps) => {
@@ -88,68 +90,63 @@ const PredictionLoanMethodsComponents = ({
         </Box>
         {selectedAlgorithmParams && (
           <Box>
-            <Heading as="h2" size="lg" mb={8} textAlign="center">
-              Predictions data
+            <Heading as="h3" size="lg" mb={8} textAlign="center">
+              <Text>
+                Prediciton best parameters model: {algorithmParamsModel}
+              </Text>
             </Heading>
+
             <Box>
-              <Heading as="h3" size="lg" mb={8} textAlign="center">
-                <Text>
-                  Prediciton best parameters model: {algorithmParamsModel}
-                </Text>
-              </Heading>
+              {selectedAlgorithmParams.model === "ses" && (
+                <Box>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Alpha
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.alpha}
+                  </Text>
+                </Box>
+              )}
 
-              <Box>
-                {selectedAlgorithmParams.model === "ses" && (
-                  <Box>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Alpha
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.alpha}
-                    </Text>
-                  </Box>
-                )}
+              {selectedAlgorithmParams.model === "holt" && (
+                <Box>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Alpha
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.params.alpha}
+                  </Text>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Beta
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.params.beta}
+                  </Text>
+                </Box>
+              )}
 
-                {selectedAlgorithmParams.model === "holt" && (
-                  <Box>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Alpha
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.params.alpha}
-                    </Text>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Beta
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.params.beta}
-                    </Text>
-                  </Box>
-                )}
-
-                {selectedAlgorithmParams.model === "holt-winter" && (
-                  <Box>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Alpha
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.params.alpha}
-                    </Text>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Beta
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.params.beta}
-                    </Text>
-                    <Text textAlign={"center"} fontWeight="bold">
-                      Gama
-                    </Text>
-                    <Text textAlign={"center"}>
-                      {selectedAlgorithmParams.params.gama}
-                    </Text>
-                  </Box>
-                )}
-              </Box>
+              {selectedAlgorithmParams.model === "holt-winter" && (
+                <Box>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Alpha
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.params.alpha}
+                  </Text>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Beta
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.params.beta}
+                  </Text>
+                  <Text textAlign={"center"} fontWeight="bold">
+                    Gama
+                  </Text>
+                  <Text textAlign={"center"}>
+                    {selectedAlgorithmParams.params.gama}
+                  </Text>
+                </Box>
+              )}
             </Box>
           </Box>
         )}
@@ -184,24 +181,42 @@ const PredictionLoanMethodsComponents = ({
               ))}
             </Box>
             {selectedPredictionData && (
-              <Box>
-                <Heading as="h3" size="lg" mb={8} textAlign="center">
-                  <Text>Prediciton model: {predictionDataModel}</Text>
-                </Heading>
-                <Text mb={8} textAlign="center">
-                  Count of future month to predict:{" "}
-                  {selectedPredictionData.countOfFutureMonthsToPredict}
-                </Text>
-                <ChartComp
-                  usedData={{
-                    type: "loan",
-                    data: usedDataForGraph,
-                  }}
-                  confidenceIntervals={
-                    selectedPredictionData.confidenceIntervals
-                  }
-                  statistics={selectedPredictionData.statistics}
-                />
+              <Box display="flex" flexDirection="column" gap={8}>
+                <Box>
+                  <Heading as="h3" size="lg" mb={8} textAlign="center">
+                    <Text>Prediciton model: {predictionDataModel}</Text>
+                  </Heading>
+                  <Text mb={8} textAlign="center">
+                    Count of future month to predict:{" "}
+                    {selectedPredictionData.countOfFutureMonthsToPredict}
+                  </Text>
+                </Box>
+                <Box>
+                  <Heading as="h4" size="lg" mb={8} textAlign="center">
+                    <Text>Line graph</Text>
+                  </Heading>
+                  <ChartComp
+                    usedData={{
+                      type: "loan",
+                      data: usedDataForGraph,
+                    }}
+                    confidenceIntervals={
+                      selectedPredictionData.confidenceIntervals
+                    }
+                    statistics={selectedPredictionData.statistics}
+                  />
+                </Box>
+                <Box>
+                  <Heading as="h4" size="lg" mb={8} textAlign="center">
+                    <Text>Bar graph</Text>
+                  </Heading>
+                  <ChartComp
+                    testData={{ data: testDataForGraph, type: "loan" }}
+                    confidenceIntervals={
+                      selectedPredictionData.confidenceIntervals
+                    }
+                  />
+                </Box>
               </Box>
             )}
           </Box>

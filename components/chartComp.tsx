@@ -10,6 +10,9 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  BarChart,
+  Bar,
+  Legend,
 } from "recharts";
 import {
   VatData,
@@ -21,13 +24,33 @@ import {
 } from "@/zod-schemas";
 
 type ChartProps = {
+  usedData?: {
+    data: VatData | InvoicesData | LoansData | WagesData;
+    type: "invoice" | "loan" | "wage" | "vat";
+  };
+  confidenceIntervals?: IntervalData;
+  statistics?: Statistics;
+  testData?: {
+    data: VatData | InvoicesData | LoansData | WagesData;
+    type: "invoice" | "loan" | "wage" | "vat";
+  };
+};
+
+type ChartLineProps = {
   usedData: {
     data: VatData | InvoicesData | LoansData | WagesData;
     type: "invoice" | "loan" | "wage" | "vat";
   };
-
   confidenceIntervals: IntervalData;
   statistics: Statistics;
+};
+
+type ChartBarProps = {
+  testData: {
+    data: VatData | InvoicesData | LoansData | WagesData;
+    type: "invoice" | "loan" | "wage" | "vat";
+  };
+  confidenceIntervals: IntervalData;
 };
 
 type ChartData = {
@@ -104,35 +127,75 @@ function getActualDataForChart(usedData: {
             "0"
           )}-${String(item.date_val.getDate()).padStart(2, "0")}`,
           actual: item.vat_val,
-          type: "vat",
+          type,
         }));
     }
     case "invoice": {
       const usedInvoicesData = data as InvoicesData;
+      const monthlyValues = new Map<string, { sum: number; count: number }>();
+      const monthlyAverages = new Map<string, number>();
 
-      return Object.values(usedInvoicesData)
-        .flat()
-        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-        .map(item => ({
-          date: `${item.dueDate.getFullYear()}-${String(
-            item.dueDate.getMonth() + 1
-          ).padStart(2, "0")}`,
-          actual: item.paymentDelay ? item.paymentDelay : 0,
-          type: "invoice",
+      usedInvoicesData.forEach(item => {
+        if (item.paymentDelay === null) {
+          return;
+        }
+
+        const key = `${item.dueDate.getFullYear()}-${String(
+          item.dueDate.getMonth() + 1
+        ).padStart(2, "0")}`;
+
+        const current = monthlyValues.get(key) ?? { sum: 0, count: 0 };
+
+        current.sum += item.paymentDelay;
+        current.count++;
+
+        monthlyValues.set(key, current);
+      });
+
+      monthlyValues.forEach((value, key) => {
+        monthlyAverages.set(key, value.sum / value.count);
+      });
+
+      return Array.from(monthlyAverages.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, actual]) => ({
+          date,
+          actual,
+          type,
         }));
     }
     case "loan": {
       const usedLoansData = data as LoansData;
+      const monthlyValues = new Map<string, { sum: number; count: number }>();
+      const monthlyAverages = new Map<string, number>();
 
-      return Object.values(usedLoansData)
-        .flat()
-        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-        .map(item => ({
-          date: `${item.dueDate.getFullYear()}-${String(
-            item.dueDate.getMonth() + 1
-          ).padStart(2, "0")}`,
-          actual: item.delay ? item.delay : 0,
-          type: "loan",
+      usedLoansData.forEach(item => {
+        if (item.delay === null) {
+          return;
+        }
+
+        const key = `${item.dueDate.getFullYear()}-${String(
+          item.dueDate.getMonth() + 1
+        ).padStart(2, "0")}`;
+
+        const current = monthlyValues.get(key) ?? { sum: 0, count: 0 };
+
+        current.sum += item.delay;
+        current.count++;
+
+        monthlyValues.set(key, current);
+      });
+
+      monthlyValues.forEach((value, key) => {
+        monthlyAverages.set(key, value.sum / value.count);
+      });
+
+      return Array.from(monthlyAverages.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, actual]) => ({
+          date,
+          actual,
+          type,
         }));
     }
     case "wage": {
@@ -152,7 +215,7 @@ function getActualDataForChart(usedData: {
         .map(([date, actual]) => ({
           date,
           actual,
-          type: "wage",
+          type,
         }));
     }
     default: {
@@ -162,11 +225,11 @@ function getActualDataForChart(usedData: {
   }
 }
 
-function PredictionChart({
+function PredictionLineChart({
   usedData,
   confidenceIntervals,
   statistics,
-}: ChartProps) {
+}: ChartLineProps) {
   const labels = { nameLabel: "", actualDataLabel: "stringa" };
 
   if (usedData.type === "vat") {
@@ -205,16 +268,15 @@ function PredictionChart({
       return undefined;
     }
 
-    return [
-      ...actualData.map(item => ({
-        ...item,
-        type: usedData.type,
-      })),
-      ...predictionData.map(item => ({
-        ...item,
-        type: usedData.type,
-      })),
-    ];
+    const predictionDataMap = new Map(
+      predictionData.map(item => [item.date, item])
+    );
+
+    return actualData.map(item => ({
+      ...item,
+      ...(predictionDataMap.get(item.date) ?? {}),
+      type: usedData.type,
+    }));
   }, [usedData, confidenceIntervals]);
 
   return (
@@ -365,18 +427,109 @@ function PredictionChart({
   );
 }
 
+const PredictionBarChart = ({
+  testData,
+  confidenceIntervals,
+}: ChartBarProps) => {
+  const chartData = useMemo<ChartData[] | undefined>(() => {
+    /* * usedData.data: * * { * "2024": [...], * "2025": [...], * "2026": [...] * } * * Proto jednotlivé roky spojíme do jednoho pole. */
+    const actualData = getActualDataForChart({
+      data: testData.data,
+      type: testData.type,
+    });
+
+    /* * Confidence intervals už mají formát: * * { * date, * prediction, * lowerBound, * upperBound * } */
+    const predictionData = confidenceIntervals.map(item => ({
+      date: item.date,
+      prediction: item.prediction,
+      lowerBound: item.lowerBound,
+      upperBound: item.upperBound,
+    }));
+
+    if (!actualData) {
+      return undefined;
+    }
+
+    const dataMap = new Map<string, ChartData>();
+
+    // Actual
+    actualData.forEach(item => {
+      const actual = item.actual;
+
+      dataMap.set(item.date, {
+        date: item.date,
+        actual,
+        type: testData.type,
+      });
+    });
+
+    // Prediction
+    predictionData.forEach(item => {
+      const existing = dataMap.get(item.date);
+
+      dataMap.set(item.date, {
+        ...existing,
+        date: item.date,
+        prediction: item.prediction,
+        lowerBound: item.lowerBound,
+        upperBound: item.upperBound,
+        type: testData.type,
+      });
+    });
+
+    return Array.from(dataMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+  }, [testData, confidenceIntervals]);
+
+  return (
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart
+        data={chartData}
+        margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+
+        <XAxis dataKey="date" />
+
+        <YAxis tickFormatter={value => value.toLocaleString("cs-CZ")} />
+
+        <Tooltip formatter={value => Number(value).toLocaleString("cs-CZ")} />
+
+        <Legend />
+
+        <Bar dataKey="actual" name="Actual" fill="#3182CE" />
+
+        <Bar dataKey="prediction" name="Prediction" fill="#E53E3E" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
+
 const ChartComp = ({
   usedData,
   confidenceIntervals,
   statistics,
+  testData,
 }: ChartProps) => {
-  return (
-    <PredictionChart
-      usedData={usedData}
-      confidenceIntervals={confidenceIntervals}
-      statistics={statistics}
-    />
-  );
+  if (usedData && confidenceIntervals && statistics) {
+    return (
+      <PredictionLineChart
+        usedData={usedData}
+        confidenceIntervals={confidenceIntervals}
+        statistics={statistics}
+      />
+    );
+  } else if (testData && confidenceIntervals) {
+    return (
+      <PredictionBarChart
+        testData={{ data: testData.data, type: testData.type }}
+        confidenceIntervals={confidenceIntervals}
+      />
+    );
+  } else {
+    return <div>No data available for chart</div>;
+  }
 };
 
 export default ChartComp;

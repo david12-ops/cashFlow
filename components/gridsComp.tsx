@@ -248,7 +248,6 @@ export const GridWagesDataComponent = ({
   );
 };
 
-//?
 export const GridIntervalsDataComponent = ({
   confidenceIntervalsData,
   itemsPerPage,
@@ -316,27 +315,15 @@ export const GridIntervalsDataComponent = ({
                 <Text mb={2}>Date: {item.date}</Text>
                 <Text mb={2}>
                   Lower Bound: {item.lowerBound}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : item.lowerBound > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
                 <Text mb={2}>
                   Prediction: {item.prediction}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : item.lowerBound > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
                 <Text>
                   Upper Bound: {item.upperBound}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : item.lowerBound > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
               </Box>
             ))
@@ -351,27 +338,15 @@ export const GridIntervalsDataComponent = ({
                 <Text mb={2}>Date: {item.date}</Text>
                 <Text mb={2}>
                   Lower Bound: {item.lowerBound}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : Math.abs(item.lowerBound) > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
                 <Text mb={2}>
                   Prediction: {item.prediction}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : Math.abs(item.lowerBound) > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
                 <Text>
                   Upper Bound: {item.upperBound}{" "}
-                  {valueType === "currency"
-                    ? "Kč"
-                    : Math.abs(item.lowerBound) > 1
-                      ? "days"
-                      : "day"}
+                  {valueType === "currency" ? "Kč" : "day/s"}
                 </Text>
               </Box>
             ))}

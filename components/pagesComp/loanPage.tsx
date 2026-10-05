@@ -39,7 +39,7 @@ const LoanPage = ({ data }: LoanPageProps) => {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly delay (Loans) prediction Graph
+              Monthly delay (Loans) prediction Line Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -63,6 +63,37 @@ const LoanPage = ({ data }: LoanPageProps) => {
           )}
         </Box>
         <Box>
+          <Box
+            position="relative"
+            p={5}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Heading as="h1" size="lg">
+              Monthly delay (Loans) prediction Bar Graph
+            </Heading>
+
+            <IconButton asChild aria-label="Domů" position="absolute" right={5}>
+              <Link href="/">
+                <House size={20} />
+              </Link>
+            </IconButton>
+          </Box>
+
+          {loanDelayPrediction ? (
+            <ChartComp
+              testData={{
+                data: loanDelayPrediction.usedData.testData,
+                type: "loan",
+              }}
+              confidenceIntervals={loanDelayPrediction.confidenceIntervals}
+            />
+          ) : (
+            <Text>Missing data for graph</Text>
+          )}
+        </Box>
+        <Box>
           <Heading as="h2" size="lg" mb={8} textAlign="center">
             Graps for comparition to prediction graph
           </Heading>
@@ -70,6 +101,7 @@ const LoanPage = ({ data }: LoanPageProps) => {
             {loanDelayPrediction ? (
               <PredictionLoanMethodsComponents
                 usedDataForGraph={loanDelayPrediction.usedData.data}
+                testDataForGraph={loanDelayPrediction.usedData.testData}
                 predictionsData={loanDelayPrediction.usedData.predictionsData}
                 algorithmsParams={loanDelayPrediction.usedData.algorithmsParams}
               />

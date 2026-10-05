@@ -24,10 +24,10 @@ type InvoicePageProps = {
 const InvoicePage = ({ data }: InvoicePageProps) => {
   const invoicePaymentDelayPrediction = data; // nenei ok
 
-  console.log(
-    "excluded data " +
-      invoicePaymentDelayPrediction.usedData.excludetData.length
-  );
+  // console.log(
+  //   "excluded data " +
+  //     invoicePaymentDelayPrediction.usedData.excludetData.length
+  // );
 
   return (
     <Box
@@ -46,7 +46,7 @@ const InvoicePage = ({ data }: InvoicePageProps) => {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly delay (Invoice) Graph
+              Monthly delay (Invoice) Line Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -65,6 +65,35 @@ const InvoicePage = ({ data }: InvoicePageProps) => {
               invoicePaymentDelayPrediction.confidenceIntervals
             }
             statistics={invoicePaymentDelayPrediction.statistics}
+          />
+        </Box>
+        <Box>
+          <Box
+            position="relative"
+            p={5}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Heading as="h1" size="lg">
+              Monthly (VAT) Bar Graph
+            </Heading>
+
+            <IconButton asChild aria-label="Domů" position="absolute" right={5}>
+              <Link href="/">
+                <House size={20} />
+              </Link>
+            </IconButton>
+          </Box>
+
+          <ChartComp
+            testData={{
+              data: invoicePaymentDelayPrediction.usedData.testData,
+              type: "invoice",
+            }}
+            confidenceIntervals={
+              invoicePaymentDelayPrediction.confidenceIntervals
+            }
           />
         </Box>
         <Box display="flex" flexDirection="column" gap={10}>

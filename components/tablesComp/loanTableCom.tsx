@@ -141,9 +141,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                         {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
                       <Table.Cell>
-                        {item.delay
-                          ? `${item.delay} ${item.delay > 1 ? "days" : "day"}`
-                          : "Without delay"}
+                        {item.delay ? `${item.delay} day/s` : "Without delay"}
                       </Table.Cell>
                       <Table.Cell>{item.amount} Kč</Table.Cell>
                       <Table.Cell>{item.amountPaid} Kč</Table.Cell>
@@ -154,16 +152,14 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}{" "}
-                            {avgAndMedian.avg > 1 ? "days" : "day"}
+                            {avgAndMedian.avg} day/s
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}{" "}
-                            {avgAndMedian.median > 1 ? "days" : "day"}
+                            {avgAndMedian.median} day/s
                           </Table.Cell>
                         </>
                       )}
@@ -181,9 +177,7 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                         {item.dueDate.toLocaleDateString("cs-CZ")}
                       </Table.Cell>
                       <Table.Cell>
-                        {item.delay
-                          ? `${item.delay} ${item.delay > 1 ? "days" : "day"}`
-                          : "Without delay"}
+                        {item.delay ? `${item.delay} day/s` : "Without delay"}
                       </Table.Cell>
                       <Table.Cell>{item.amount} Kč</Table.Cell>
                       <Table.Cell>{item.amountPaid} Kč</Table.Cell>
@@ -194,16 +188,14 @@ const LoanTableComp = ({ years, data, itemsPerPage, type }: LoanTableProps) => {
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.avg}{" "}
-                            {avgAndMedian.avg > 1 ? "days" : "day"}
+                            {avgAndMedian.avg} day/s
                           </Table.Cell>
 
                           <Table.Cell
                             rowSpan={dataOfTheYear.length}
                             verticalAlign="top"
                           >
-                            {avgAndMedian.median}{" "}
-                            {avgAndMedian.median > 1 ? "days" : "day"}
+                            {avgAndMedian.median} day/s
                           </Table.Cell>
                         </>
                       )}

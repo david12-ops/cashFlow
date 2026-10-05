@@ -36,7 +36,7 @@ const WagePage = ({ data }: WagePageProps) => {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly (Wages) Graph
+              Monthly (Wages) Line Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -54,6 +54,35 @@ const WagePage = ({ data }: WagePageProps) => {
               }}
               confidenceIntervals={wagePrediction.confidenceIntervals}
               statistics={wagePrediction.statistics}
+            />
+          )}
+        </Box>
+        <Box>
+          <Box
+            position="relative"
+            p={5}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Heading as="h1" size="lg">
+              Monthly (Wages) Bar Graph
+            </Heading>
+
+            <IconButton asChild aria-label="Domů" position="absolute" right={5}>
+              <Link href="/">
+                <House size={20} />
+              </Link>
+            </IconButton>
+          </Box>
+
+          {wagePrediction && (
+            <ChartComp
+              testData={{
+                type: "wage",
+                data: wagePrediction.usedData.testData,
+              }}
+              confidenceIntervals={wagePrediction.confidenceIntervals}
             />
           )}
         </Box>

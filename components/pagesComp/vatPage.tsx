@@ -38,7 +38,7 @@ const VatPage = ({ data }: VatPageProps) => {
             alignItems="center"
           >
             <Heading as="h1" size="lg">
-              Monthly (VAT) Graph
+              Monthly (VAT) Line Graph
             </Heading>
 
             <IconButton asChild aria-label="Domů" position="absolute" right={5}>
@@ -48,7 +48,7 @@ const VatPage = ({ data }: VatPageProps) => {
             </IconButton>
           </Box>
 
-          {monthlyVatPrediction ? (
+          {monthlyVatPrediction && monthlyVatPrediction.usedData.testData ? (
             <ChartComp
               usedData={{
                 type: "vat",
@@ -56,6 +56,39 @@ const VatPage = ({ data }: VatPageProps) => {
               }}
               confidenceIntervals={monthlyVatPrediction.confidenceIntervals}
               statistics={monthlyVatPrediction.statistics}
+            />
+          ) : (
+            <Text>Missing data for graph</Text>
+          )}
+        </Box>
+        <Box>
+          <Box
+            position="relative"
+            p={5}
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Heading as="h1" size="lg">
+              Monthly (VAT) Bar Graph
+            </Heading>
+
+            <IconButton asChild aria-label="Domů" position="absolute" right={5}>
+              <Link href="/">
+                <House size={20} />
+              </Link>
+            </IconButton>
+          </Box>
+
+          {monthlyVatPrediction &&
+          monthlyVatPrediction.usedData.testData &&
+          monthlyVatPrediction.usedData.testData.data ? (
+            <ChartComp
+              testData={{
+                data: monthlyVatPrediction.usedData.testData.data,
+                type: "vat",
+              }}
+              confidenceIntervals={monthlyVatPrediction.confidenceIntervals}
             />
           ) : (
             <Text>Missing data for graph</Text>

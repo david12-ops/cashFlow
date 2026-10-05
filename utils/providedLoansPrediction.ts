@@ -21,63 +21,101 @@ function prepareLoanData(): LoansData {
   const startYear = 2021;
   const endYear = 2025;
 
-  const loans = [
-    { creditNumber: 1200451, amount: 3000, startMonth: 1 },
-    { creditNumber: 1200452, amount: 5500, startMonth: 3 },
-    { creditNumber: 1200453, amount: 4200, startMonth: 6 },
-    { creditNumber: 1200454, amount: 7500, startMonth: 9 },
-    { creditNumber: 1200455, amount: 12000, startMonth: 2 },
-  ];
+  const loans = [];
 
-  for (const loan of loans) {
+  for (let i = 0; i < 100; i++) {
+    loans.push({
+      creditNumber: 1200451 + i,
+      amount: [3000, 5500, 4200, 7500, 12000][Math.floor(Math.random() * 5)],
+      startMonth: Math.floor(Math.random() * 12) + 1,
+    });
+  }
+
+  for (let loanIndex = 0; loanIndex < loans.length; loanIndex++) {
+    const loan = loans[loanIndex];
+
     const startDate = new Date(startYear, loan.startMonth - 1, 15);
+
+    let paymentNumber = 1;
+    let nonPayerDelay = 0;
+
+    const referenceDate = new Date(2025, 11, 31);
 
     for (let year = startYear; year <= endYear; year++) {
       for (let month = 0; month < 12; month++) {
         const dueDate = new Date(year, month, 15);
-        let paymentNumber = 1;
 
         if (dueDate < startDate) {
           continue;
         }
+
+        if (dueDate > referenceDate) {
+          loanData.push({
+            creditNumber: loan.creditNumber,
+            paymentNumber,
+            dueDate,
+            delay: null,
+            amount: loan.amount,
+            amountPaid: 0,
+          });
+
+          paymentNumber++;
+          continue;
+        }
+
+        /*
+         * First 59 loans
+         * Done loans
+         */
+        if (loanIndex < 60) {
+          const endMonth = loanIndex % 12;
+
+          if (year > 2024 || (year === 2024 && month > endMonth)) {
+            continue;
+          }
+        }
+
+        /*
+         * Loans 60-79
+         * Paid normally and in last period
+         * Stopped paying back
+         */
+        const isNonPayer =
+          loanIndex >= 60 && loanIndex < 80 && year === 2025 && month >= 5;
 
         // Season coefficient
         const seasonality = Math.sin((2 * Math.PI * month) / 12);
 
         const amountCzeWithSeasonality = loan.amount * (1 + 0.3 * seasonality);
 
-        const paymentType = Math.random();
-
         let amountPaid: number;
         let delay: number | null;
 
-        if (paymentType < 0.7) {
-          // 70% paid on time
-          amountPaid = amountCzeWithSeasonality;
-          delay = 0;
-        } else if (paymentType < 0.9) {
-          // 20% paid late
-          amountPaid = amountCzeWithSeasonality;
-          delay = Math.floor(Math.random() * 30) + 1;
-        } else if (paymentType < 0.95) {
-          // 5% paid partially
-          amountPaid = Math.floor(
-            amountCzeWithSeasonality * (0.3 + Math.random() * 0.5)
-          );
-          delay = Math.floor(Math.random() * 30) + 1;
-        } else {
-          // 5% not paid yet
+        if (isNonPayer) {
+          /*
+           * Non-payer:
+           * installment is not paid and the delay
+           * is longer than a month.
+           */
+
           amountPaid = 0;
-          delay = null;
+          nonPayerDelay += 30;
+          delay = nonPayerDelay;
+        } else {
+          /*
+           * Regular payer:
+           */
+          amountPaid = amountCzeWithSeasonality;
+          delay = Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 10) + 1;
         }
 
         loanData.push({
           creditNumber: loan.creditNumber,
-          paymentNumber: paymentNumber,
+          paymentNumber,
           dueDate: dueDate,
           delay,
           amount: loan.amount,
-          amountPaid: amountPaid,
+          amountPaid,
         });
 
         paymentNumber++;
@@ -217,7 +255,7 @@ function sesPrediction(
     const date = new Date(year, month + i);
 
     predictionData.push({
-      date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
       value: lastSmoothedValue,
     });
   }
@@ -457,7 +495,7 @@ function holtPrediction(
       const value = level + i * trend;
 
       predictionData.push({
-        date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
         value,
       });
     }
@@ -473,7 +511,7 @@ function holtPrediction(
         seasonalValue;
 
       predictionData.push({
-        date: `${date.getFullYear()}-${date.getMonth() + 1}`,
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
         value,
       });
     }
@@ -522,11 +560,13 @@ function prepareDataToAlgorithm(data: LoansData): {
   trainingData: LoansData;
   testData: LoansData;
 } {
-  const years = [
-    ...data.map(item => {
-      return item.dueDate.getFullYear();
-    }),
-  ].sort((a, b) => a - b);
+  const years = Array.from(
+    new Set([
+      ...data.map(item => {
+        return item.dueDate.getFullYear();
+      }),
+    ])
+  ).sort((a, b) => a - b);
 
   const secondToLastYear = years[years.length - 2];
   const lastYear = years[years.length - 1];
@@ -540,7 +580,17 @@ function prepareDataToAlgorithm(data: LoansData): {
   return { trainingData, testData };
 }
 
-//jeste rozdeleni do skupin??
+const getPredictionData = (data: LoansData): LoansData => {
+  const creditNumbersWithLongDelay = new Set(
+    data
+      .filter(item => item.delay != null && item.delay > 30)
+      .map(item => item.creditNumber)
+  );
+
+  return data.filter(
+    item => !creditNumbersWithLongDelay.has(item.creditNumber)
+  );
+};
 
 export default function providedLoansPrediction():
   | {
@@ -549,9 +599,15 @@ export default function providedLoansPrediction():
       statistics: Statistics;
     }
   | undefined {
-  const data: LoansData = prepareLoanData();
+  let data: LoansData = prepareLoanData();
+  data = getPredictionData(data);
 
   const { trainingData, testData } = prepareDataToAlgorithm(data);
+
+  const trainingDates = trainingData.map(item => item.dueDate);
+  const sortedTrainingDates = [...trainingDates].sort(
+    (a, b) => a.getTime() - b.getTime()
+  );
 
   const aggtrainingData = aggregateLoansDelayByMonth(trainingData);
   const aggtestData = aggregateLoansDelayByMonth(testData);
@@ -574,7 +630,7 @@ export default function providedLoansPrediction():
 
   const predictionSES = sesPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1),
+    sortedTrainingDates[sortedTrainingDates.length - 2],
     smoothedDataBySES
   );
 
@@ -590,7 +646,7 @@ export default function providedLoansPrediction():
 
   const predictionHolt = holtPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1),
+    sortedTrainingDates[sortedTrainingDates.length - 2],
     "holt",
     {
       level: smoothedDataByHolt.level,
@@ -611,7 +667,7 @@ export default function providedLoansPrediction():
 
   const predictionHoltWinter = holtPrediction(
     countOfFutureMonthsToPredict,
-    new Date(2025, 11, 1),
+    sortedTrainingDates[sortedTrainingDates.length - 2],
     "holt-winter",
     undefined,
     {

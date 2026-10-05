@@ -681,7 +681,7 @@ function aggregateDataByMonth(data: WagesData): number[] {
   data.forEach(item => {
     const key = `${item.transactionDate.getFullYear()}-${String(
       item.transactionDate.getMonth() + 1
-    ).padStart(2, "0")}`;
+    )}`;
 
     if (!monthlyValues.has(key)) {
       monthlyValues.set(key, []);
@@ -716,7 +716,7 @@ function randomWalkWithDrift(
       predictionDate.setMonth(predictionDate.getMonth() + 1);
 
       predictions.push({
-        date: `${predictionDate.getFullYear()}-${predictionDate.getMonth() + 1}`,
+        date: `${predictionDate.getFullYear()}-${String(predictionDate.getMonth() + 1)}`,
         value: monthlyValues[0],
       });
     }
@@ -740,7 +740,7 @@ function randomWalkWithDrift(
     lastValue = lastValue + drift;
 
     predictions.push({
-      date: `${predictionDate.getFullYear()}-${predictionDate.getMonth() + 1}`,
+      date: `${predictionDate.getFullYear()}-${String(predictionDate.getMonth() + 1).padStart(2, "0")}`,
       value: lastValue,
     });
 
