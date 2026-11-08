@@ -15,7 +15,7 @@ import {
 } from "./statisticsFunctions";
 import { UsedDataLoans } from "./classes";
 
-function prepareLoanData(): LoansData {
+function prepareLoanData(dataSetType: "STABLE" | "UNSTABLE"): LoansData {
   const loanData: LoansData = [];
 
   const startYear = 2021;
@@ -45,6 +45,9 @@ function prepareLoanData(): LoansData {
       for (let month = 0; month < 12; month++) {
         const dueDate = new Date(year, month, 15);
 
+        const monthsFromStart =
+          (year - startYear) * 12 + month - (loan.startMonth - 1);
+
         if (dueDate < startDate) {
           continue;
         }
@@ -63,16 +66,23 @@ function prepareLoanData(): LoansData {
           continue;
         }
 
-        /*
-         * First 59 loans
-         * Done loans
-         */
-        if (loanIndex < 60) {
-          const endMonth = loanIndex % 12;
+        let isNonPayer = false;
 
-          if (year > 2024 || (year === 2024 && month > endMonth)) {
-            continue;
+        if (dataSetType === "UNSTABLE") {
+          /*
+           * First 59 loans
+           * Done loans
+           */
+          if (loanIndex < 60) {
+            const endMonth = loanIndex % 12;
+
+            if (year > 2024 || (year === 2024 && month > endMonth)) {
+              continue;
+            }
           }
+
+          isNonPayer =
+            loanIndex >= 60 && loanIndex < 80 && year === 2025 && month >= 5;
         }
 
         /*
@@ -80,8 +90,6 @@ function prepareLoanData(): LoansData {
          * Paid normally and in last period
          * Stopped paying back
          */
-        const isNonPayer =
-          loanIndex >= 60 && loanIndex < 80 && year === 2025 && month >= 5;
 
         // Season coefficient
         const seasonality = Math.sin((2 * Math.PI * month) / 12);
@@ -102,11 +110,25 @@ function prepareLoanData(): LoansData {
           nonPayerDelay += 30;
           delay = nonPayerDelay;
         } else {
+          // Trend effect: 0.1 day per month from start
+          const trendEffect = monthsFromStart * 0.1;
+          // Season coefficient
+          const seasonalDelayEffect = 3 * seasonality;
+          const randomDelay = Math.random() * 2;
+          const delayProbability = Math.min(0.2 + monthsFromStart * 0.005, 0.6);
+
           /*
            * Regular payer:
            */
           amountPaid = amountCzeWithSeasonality;
-          delay = Math.random() < 0.8 ? 0 : Math.floor(Math.random() * 10) + 1;
+          if (Math.random() < delayProbability) {
+            delay = Math.max(
+              0,
+              Math.round(2 + trendEffect + seasonalDelayEffect + randomDelay)
+            );
+          } else {
+            delay = 0;
+          }
         }
 
         loanData.push({
@@ -599,7 +621,7 @@ export default function providedLoansPrediction():
       statistics: Statistics;
     }
   | undefined {
-  let data: LoansData = prepareLoanData();
+  let data: LoansData = prepareLoanData("STABLE");
   data = getPredictionData(data);
 
   const { trainingData, testData } = prepareDataToAlgorithm(data);
