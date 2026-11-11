@@ -33,7 +33,7 @@ export function createStatitics(
     validObservationCount > 0
       ? (100 / validObservationCount) * sumForMape
       : null;
-  // average of the signed relative error
+  // Mean Relative Error (average of signed relative errors)
   const mre =
     validObservationCount > 0
       ? (1 / validObservationCount) * sumForRelativeError * 100
