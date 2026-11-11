@@ -10,7 +10,7 @@ export function createStatitics(
   // sum for average of the signed relative error
   let sumForRelativeError = 0;
 
-  const countForRelativeError = testData.filter(value => value !== 0).length;
+  const validObservationCount = testData.filter(value => value !== 0).length;
 
   const count = Math.min(testData.length, predictedData.length);
 
@@ -30,20 +30,20 @@ export function createStatitics(
   const mae = (1 / testData.length) * sumForMae;
   const rmse = Math.sqrt((1 / testData.length) * sumForRMSE);
   const mape =
-    countForRelativeError > 0
-      ? (100 / countForRelativeError) * sumForMape
+    validObservationCount > 0
+      ? (100 / validObservationCount) * sumForMape
       : null;
   // average of the signed relative error
-  const relativeError =
-    countForRelativeError > 0
-      ? (1 / countForRelativeError) * sumForRelativeError * 100
+  const mre =
+    validObservationCount > 0
+      ? (1 / validObservationCount) * sumForRelativeError * 100
       : null;
 
   return {
     valueMAE: mae,
     valueMAPE: mape,
     valueRMSE: rmse,
-    valueMRE: relativeError,
+    valueMRE: mre,
   };
 }
 
